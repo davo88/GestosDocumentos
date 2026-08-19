@@ -344,6 +344,15 @@ def documentacion_proyecto(request, proyecto_id):
                     },
                     status=400,
                 )
+            except Exception as exc:
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "message": f"Error interno al procesar {os.path.basename(archivo.name)}: {exc}",
+                        "document_name": os.path.basename(archivo.name),
+                    },
+                    status=500,
+                )
 
             return JsonResponse(
                 {

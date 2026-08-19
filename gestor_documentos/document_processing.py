@@ -1,8 +1,10 @@
 from pathlib import Path
+from zipfile import BadZipFile
 from xml.etree import ElementTree
 
 from docx import Document as WordDocument
 from docx.document import Document as WordProcessingDocument
+from docx.opc.exceptions import PackageNotFoundError
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 from django.utils.html import escape
@@ -73,7 +75,12 @@ def _convert_text_to_markdown(uploaded_file):
 
 def _convert_docx_to_markdown(uploaded_file):
     uploaded_file.seek(0)
-    document = WordDocument(uploaded_file)
+    try:
+        document = WordDocument(uploaded_file)
+    except (BadZipFile, PackageNotFoundError):
+        raise DocumentProcessingError(
+            f"El archivo {uploaded_file.name} no es un .docx valido o esta dañado."
+        ) from None
     uploaded_file.seek(0)
 
     blocks = []
@@ -96,7 +103,12 @@ def _convert_docx_to_markdown(uploaded_file):
 def _render_docx_to_html(file_field):
     file_field.open("rb")
     try:
-        document = WordDocument(file_field)
+        try:
+            document = WordDocument(file_field)
+        except (BadZipFile, PackageNotFoundError):
+            raise DocumentProcessingError(
+                f"El archivo {file_field.name} no es un .docx valido o esta dañado."
+            ) from None
     finally:
         file_field.close()
 

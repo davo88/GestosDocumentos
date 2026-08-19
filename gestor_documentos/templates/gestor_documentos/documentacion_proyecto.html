@@ -531,7 +531,11 @@
                         return;
                     }
 
-                    const errorMessage = payload.message || "No se pudo procesar este documento.";
+                    const rawResponse = (xhr.responseText || "").trim();
+                    const fallbackResponse = rawResponse
+                        ? rawResponse.slice(0, 400)
+                        : `El servidor respondio con estado ${xhr.status}.`;
+                    const errorMessage = payload.message || fallbackResponse || "No se pudo procesar este documento.";
                     uploadCurrentStage.textContent = errorMessage;
                     updateRow(index, errorMessage, "Error", "outdated");
                     resolve({ ok: false, result: "error", message: errorMessage });
