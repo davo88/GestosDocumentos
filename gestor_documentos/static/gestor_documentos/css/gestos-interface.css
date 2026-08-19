@@ -134,10 +134,27 @@ button, input, select, textarea { font-family: inherit; }
     box-shadow: 0 1px 6px rgba(0, 0, 0, .06);
 }
 
+.header-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: auto;
+    color: #9aa3ac;
+    font-size: .78rem;
+}
+
+.header-breadcrumb span { color: var(--dot-primary); font-weight: 600; }
+.breadcrumb-separator { color: #c5cbd2; font-size: .58rem; }
+
 .page {
     width: 100%;
     max-width: none;
+    min-height: calc(100vh - 60px);
     padding: 24px 28px 48px;
+    border: 0;
+    border-radius: 0;
+    background: #f0f2f5;
+    box-shadow: none;
 }
 .user-copy { display: flex; align-items: center; gap: 9px; color: var(--dot-primary); font-weight: 600; }
 .user-avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; color: #1a73e8; background: #e8f0fe; }
@@ -170,6 +187,43 @@ button, input, select, textarea { font-family: inherit; }
     max-width: none;
     gap: 18px;
 }
+
+.page .dashboard-shell { display: grid; gap: 18px; }
+.page .dashboard-hero {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 26px 28px;
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 68%, #287fb8 100%);
+    box-shadow: var(--dot-shadow);
+}
+.page .dashboard-hero .dashboard-kicker { margin-bottom: 5px; color: #7bc4f3; font-size: .68rem; letter-spacing: 1px; }
+.page .dashboard-hero h1 { margin: 0; color: #fff; font-size: 1.65rem; }
+.page .dashboard-hero p { margin: 6px 0 0; max-width: none; color: rgba(255,255,255,.68); font-size: .82rem; }
+.dashboard-action { display: inline-flex; min-height: 40px; flex: 0 0 auto; align-items: center; gap: 8px; padding: 9px 15px; border-radius: 8px; color: #fff; background: rgba(255,255,255,.14); font-size: .8rem; font-weight: 600; }
+.dashboard-action:hover { background: rgba(255,255,255,.22); }
+.dashboard-stats { display: grid; width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.stat-card { display: grid; min-width: 0; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 18px; border: 1px solid #e4e7ec; border-radius: 10px; background: #fff; box-shadow: var(--dot-shadow); }
+.stat-icon { display: grid; width: 40px; height: 40px; grid-row: 1 / 3; place-items: center; border-radius: 9px; color: #1a73e8; background: #e8f0fe; }
+.stat-value { color: var(--dot-primary); font-size: 1.35rem; font-weight: 700; line-height: 1; }
+.stat-label { overflow: hidden; color: #7f8c8d; font-size: .72rem; line-height: 1.3; text-overflow: ellipsis; }
+.stat-card.red .stat-icon { color: #c62828; background: #ffebee; }
+.stat-card.orange .stat-icon { color: #e66b00; background: #fff3e0; }
+.stat-card.green .stat-icon { color: #1e8c5a; background: #e8f5e9; }
+.page .activity-card { width: 100%; padding: 22px; border: 1px solid #e4e7ec; border-radius: 10px; background: #fff; box-shadow: var(--dot-shadow); }
+.page .activity-card h2 { color: var(--dot-primary); font-size: 1rem; }
+.page .activity-list { gap: 0; }
+.page .activity-item { padding: 14px 0; border: 0; border-bottom: 1px solid #edf0f3; border-radius: 0; background: #fff; }
+.page .activity-item:last-child { border-bottom: 0; }
+.page .activity-title { font-size: .88rem; }
+.page .activity-eyebrow, .page .activity-time { font-size: .72rem; }
+.section-count { display: grid; min-width: 28px; height: 28px; place-items: center; border-radius: 999px; color: #1a73e8; background: #e8f0fe; font-size: .75rem; font-weight: 700; }
+.section-link { color: var(--dot-blue-dark); font-size: .76rem; font-weight: 600; }
 
 /* Los formularios de contenido aprovechan el ancho de su tarjeta. */
 .detail-card > form {
@@ -327,6 +381,7 @@ table tbody tr:hover { background: #f7fbfe; }
     .page { padding: 20px 16px 36px; }
     .detail-card > form,
     .compare-form { grid-template-columns: 1fr; }
+    .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 560px) {
@@ -335,4 +390,7 @@ table tbody tr:hover { background: #f7fbfe; }
     .topbar-actions { flex-wrap: wrap; }
     .user-copy span:last-child { display: none; }
     .system-toast-stack { top: 12px; right: 12px; width: calc(100vw - 24px); }
+    .header-breadcrumb { display: none; }
+    .page .dashboard-hero { align-items: flex-start; flex-direction: column; }
+    .dashboard-stats { grid-template-columns: 1fr; }
 }

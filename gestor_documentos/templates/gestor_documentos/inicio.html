@@ -155,18 +155,34 @@
 
 <div class="dashboard-shell">
     <section class="dashboard-hero">
-        <div class="dashboard-kicker">{{ dashboard_role }}</div>
-        <h1>{{ dashboard_title }}</h1>
-        <p>
-            Mant&eacute;n claro qu&eacute; te toca revisar hoy, qu&eacute; ya avanz&oacute; el equipo y d&oacute;nde conviene entrar primero para que la documentaci&oacute;n no se descontrole.
-        </p>
+        <div>
+            <div class="dashboard-kicker">{{ dashboard_role }}</div>
+            <h1>{{ dashboard_title }}</h1>
+            <p>Resumen de actividad y pendientes.</p>
+        </div>
+        <a class="dashboard-action" href="{% url 'documentacion' %}"><i class="fa-solid fa-folder-open"></i> Ver documentos</a>
+    </section>
+
+    <section class="dashboard-stats" aria-label="Resumen">
+        {% for stat in dashboard_stats %}
+            <article class="stat-card {{ stat.tone }}">
+                <span class="stat-icon">
+                    {% if stat.tone == 'red' %}<i class="fa-solid fa-ticket"></i>
+                    {% elif stat.tone == 'orange' %}<i class="fa-solid fa-clock"></i>
+                    {% elif stat.tone == 'green' %}<i class="fa-solid fa-circle-check"></i>
+                    {% else %}<i class="fa-solid fa-file-circle-exclamation"></i>{% endif %}
+                </span>
+                <span class="stat-value">{{ stat.value }}</span>
+                <span class="stat-label">{{ stat.label }}</span>
+            </article>
+        {% endfor %}
     </section>
 
     {% if is_visualizador_user %}
         <section class="activity-card">
             <div class="section-head">
                 <h2>Documentos con cambios sin revisar</h2>
-                <span class="activity-time">{{ pending_documents|length }} pendientes visibles</span>
+                <span class="section-count">{{ pending_documents|length }}</span>
             </div>
             <div class="pending-documents">
                 {% for item in pending_documents %}
@@ -194,7 +210,7 @@
                         </div>
                     </article>
                 {% empty %}
-                    <div class="documents-empty">No hay documentos pendientes por revisar en este momento.</div>
+                    <div class="documents-empty">Sin documentos pendientes.</div>
                 {% endfor %}
             </div>
         </section>
@@ -203,21 +219,20 @@
     <section class="activity-card">
         <div class="section-head">
             <h2>Actividad reciente</h2>
-            <span class="activity-time">Se muestra la actividad global del sistema</span>
+            <a class="section-link" href="{% url 'documentacion' %}">Ver documentos <i class="fa-solid fa-arrow-right"></i></a>
         </div>
         <div class="activity-list">
             {% for item in recent_activity %}
                 <article class="activity-item">
                     <div class="activity-eyebrow">{{ item.eyebrow }}</div>
                     <div class="activity-title">{{ item.title }}</div>
-                    <div class="activity-subtitle">{{ item.subtitle }}</div>
                     <div class="activity-footer">
                         <div class="activity-time">Hace {{ item.timestamp|timesince }}</div>
                         <a class="document-link emphasis" href="{{ item.action_url }}">{{ item.action_label }}</a>
                     </div>
                 </article>
             {% empty %}
-                <div class="documents-empty">Aun no hay actividad reciente para mostrar en tu panel.</div>
+                <div class="documents-empty">Sin actividad reciente.</div>
             {% endfor %}
         </div>
     </section>
