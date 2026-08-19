@@ -259,6 +259,53 @@ button, input, select, textarea { font-family: inherit; }
 .page .wbs-subtask-item,
 .page .wbs-file-item { border-radius: 8px; }
 
+/* Detalle WBS amplio, con cabecera y acciones siempre visibles. */
+#detalle-tarea-wbs-modal { padding: 20px; }
+#detalle-tarea-wbs-modal .modal-wide {
+    width: min(1380px, calc(100vw - 40px));
+    height: min(92vh, 1040px);
+    max-height: 92vh;
+    padding: 0;
+    overflow: hidden;
+}
+#detalle-tarea-wbs-modal .wbs-detail-modal {
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+#detalle-tarea-wbs-modal .wbs-detail-header {
+    padding: 24px 28px 20px;
+}
+#detalle-tarea-wbs-modal .wbs-detail-header-main { gap: 7px; }
+#detalle-tarea-wbs-modal .wbs-detail-title-row h2 { font-size: 1.75rem; }
+#detalle-tarea-wbs-modal .wbs-detail-layout {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    align-items: stretch;
+    overflow: hidden;
+}
+#detalle-tarea-wbs-modal .wbs-detail-main {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 26px 30px 30px 28px;
+}
+#detalle-tarea-wbs-modal .wbs-detail-sidebar {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 26px 28px 30px;
+}
+#detalle-tarea-wbs-modal .wbs-detail-description-editor textarea { min-height: 180px; }
+#detalle-tarea-wbs-modal .wbs-comment-composer-body textarea { min-height: 130px; }
+#detalle-tarea-wbs-modal .wbs-detail-footer {
+    margin: 0;
+    padding: 14px 28px;
+    background: #fff;
+}
+
 /* Los formularios de contenido aprovechan el ancho de su tarjeta. */
 .detail-card > form {
     display: grid;
@@ -416,6 +463,12 @@ table tbody tr:hover { background: #f7fbfe; }
     .detail-card > form,
     .compare-form { grid-template-columns: 1fr; }
     .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #detalle-tarea-wbs-modal { padding: 10px; }
+    #detalle-tarea-wbs-modal .modal-wide { width: calc(100vw - 20px); height: 95vh; max-height: 95vh; }
+    #detalle-tarea-wbs-modal .wbs-detail-layout { display: block; overflow-y: auto; }
+    #detalle-tarea-wbs-modal .wbs-detail-main,
+    #detalle-tarea-wbs-modal .wbs-detail-sidebar { overflow: visible; padding: 22px; }
+    #detalle-tarea-wbs-modal .wbs-detail-sidebar { border-top: 1px solid #e6ebf2; border-left: 0; }
 }
 
 @media (max-width: 560px) {
