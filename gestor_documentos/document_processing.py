@@ -143,6 +143,13 @@ def _extract_heading_level(style_name):
     return 1
 
 
+def _get_style_name(paragraph):
+    style = getattr(paragraph, "style", None)
+    if style is None:
+        return ""
+    return (getattr(style, "name", "") or "").lower()
+
+
 def _iter_block_items(document):
     parent = document.element.body
     for child in parent.iterchildren():
@@ -159,7 +166,7 @@ def _append_paragraph_block(blocks, paragraph):
             blocks.append("")
         return
 
-    style_name = (paragraph.style.name or "").lower()
+    style_name = _get_style_name(paragraph)
     if style_name.startswith("heading"):
         level = _extract_heading_level(style_name)
         blocks.append(f"{'#' * level} {text}")
@@ -170,7 +177,7 @@ def _append_paragraph_block(blocks, paragraph):
 
 def _append_paragraph_html(blocks, paragraph, active_list_type):
     text_html = _render_paragraph_runs(paragraph)
-    style_name = (paragraph.style.name or "").lower()
+    style_name = _get_style_name(paragraph)
 
     if not text_html.strip():
         if active_list_type:
