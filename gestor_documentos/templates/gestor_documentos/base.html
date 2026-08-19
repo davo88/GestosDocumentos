@@ -1,9 +1,14 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gestor de Documentos{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         :root {
             --shell: #f7f3ec;
@@ -1351,35 +1356,50 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{% static 'gestor_documentos/css/gestos-interface.css' %}?v=3">
 </head>
 <body>
     <div class="layout">
         <aside class="sidebar">
-            <div class="brand">Gestor</div>
-            <p class="brand-copy">Panel interno</p>
+            <div class="sidebar-logo">
+                <span class="logo-icon"><i class="fa-solid fa-file-lines"></i></span>
+                <span class="logo-text">Gestos</span>
+            </div>
+            <div class="sidebar-wrapper">
+                <div class="nav-section"><h4>Usuario</h4><span class="nav-section-line"></span></div>
+                <div class="nav-user-block">
+                    <span class="nav-user-avatar"><i class="fa-solid fa-user"></i></span>
+                    <span class="nav-user-info"><strong>{{ request.user.username }}</strong><small>{% if is_admin_user %}Administrador{% elif is_gestor_user %}Gestor{% else %}Visualizador{% endif %}</small></span>
+                </div>
 
-            <nav>
-                <a class="nav-link {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}" href="{% url 'inicio' %}">Inicio</a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'documentacion' or request.resolver_match.url_name == 'documentacion_proyecto' or request.resolver_match.url_name == 'documento_cambios' or request.resolver_match.url_name == 'documento_visualizador' %}active{% endif %}" href="{% url 'documentacion' %}">Documentaci&oacute;n</a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'buscador_documentacion' %}active{% endif %}" href="{% url 'buscador_documentacion' %}">Buscador de Documentaci&oacute;n</a>
-                {% if request.user.is_authenticated %}
-                    <a class="nav-link {% if request.resolver_match.url_name == 'tickets' or request.resolver_match.url_name == 'ticket_detalle' %}active{% endif %}" href="{% url 'tickets' %}">Tickets</a>
-                {% endif %}
-                {% if is_admin_user %}
-                    <a class="nav-link {% if request.resolver_match.url_name == 'configuraciones' %}active{% endif %}" href="{% url 'configuraciones' %}">Configuraciones</a>
-                {% endif %}
-                {% if is_admin_user %}
-                    <a class="nav-link {% if request.resolver_match.url_name == 'crear_usuarios' %}active{% endif %}" href="{% url 'crear_usuarios' %}">Crear usuarios</a>
-                {% endif %}
-            </nav>
+                <div class="nav-section"><h4>M&oacute;dulos</h4><span class="nav-section-line"></span></div>
+                <nav>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}" href="{% url 'inicio' %}"><i class="fa-solid fa-house"></i><span>Inicio</span></a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'documentacion' or request.resolver_match.url_name == 'documentacion_proyecto' or request.resolver_match.url_name == 'documento_cambios' or request.resolver_match.url_name == 'documento_visualizador' %}active{% endif %}" href="{% url 'documentacion' %}"><i class="fa-solid fa-folder-tree"></i><span>Documentaci&oacute;n</span></a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'buscador_documentacion' %}active{% endif %}" href="{% url 'buscador_documentacion' %}"><i class="fa-solid fa-magnifying-glass"></i><span>Buscador de Documentaci&oacute;n</span></a>
+                    {% if request.user.is_authenticated %}
+                        <a class="nav-link {% if request.resolver_match.url_name == 'tickets' or request.resolver_match.url_name == 'ticket_detalle' %}active{% endif %}" href="{% url 'tickets' %}"><i class="fa-solid fa-ticket"></i><span>Tickets</span></a>
+                    {% endif %}
+                    {% if is_admin_user %}
+                        <a class="nav-link {% if request.resolver_match.url_name == 'configuraciones' %}active{% endif %}" href="{% url 'configuraciones' %}"><i class="fa-solid fa-gear"></i><span>Configuraciones</span></a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'crear_usuarios' %}active{% endif %}" href="{% url 'crear_usuarios' %}"><i class="fa-solid fa-users-gear"></i><span>Crear usuarios</span></a>
+                    {% endif %}
+                </nav>
+
+                <div class="nav-section"><h4>Sesi&oacute;n</h4><span class="nav-section-line"></span></div>
+                <form class="sidebar-logout-form" method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button class="nav-link sidebar-logout" type="submit"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Cerrar sesi&oacute;n</span></button>
+                </form>
+            </div>
         </aside>
 
         <main class="content">
             <header class="topbar">
                 <div class="topbar-actions">
                     <div class="notification-wrap">
-                        <button class="notification-button" type="button" id="notification-toggle">
-                            Notificaciones
+                        <button class="notification-button" type="button" id="notification-toggle" aria-label="Abrir notificaciones">
+                            <i class="fa-regular fa-bell"></i> Notificaciones
                             <span class="notification-count">{{ recent_notifications_count }}</span>
                         </button>
 
@@ -1412,19 +1432,27 @@
                         </div>
                     </div>
 
-                    <div class="user-copy">{{ request.user.username }}</div>
+                    <div class="user-copy"><span class="user-avatar"><i class="fa-solid fa-user"></i></span><span>{{ request.user.username }}</span></div>
                 </div>
-                <form class="logout-form" method="post" action="{% url 'logout' %}">
-                    {% csrf_token %}
-                    <button class="logout-button" type="submit">Cerrar sesi&oacute;n</button>
-                </form>
             </header>
 
             <section class="page">
                 {% if messages %}
-                    <div class="messages">
+                    <div class="system-toast-stack" aria-live="polite">
                         {% for message in messages %}
-                            <div class="message {{ message.tags }}">{{ message }}</div>
+                            <div class="system-toast {{ message.tags }}" data-system-toast>
+                                <span class="system-toast-icon">
+                                    {% if 'success' in message.tags %}<i class="fa-solid fa-check"></i>
+                                    {% elif 'error' in message.tags %}<i class="fa-solid fa-xmark"></i>
+                                    {% elif 'warning' in message.tags %}<i class="fa-solid fa-exclamation"></i>
+                                    {% else %}<i class="fa-solid fa-info"></i>{% endif %}
+                                </span>
+                                <span class="system-toast-copy">
+                                    <strong>{% if 'success' in message.tags %}Listo{% elif 'error' in message.tags %}Atenci&oacute;n{% elif 'warning' in message.tags %}Aviso{% else %}Gestos{% endif %}</strong>
+                                    <span>{{ message }}</span>
+                                </span>
+                                <button class="system-toast-close" type="button" data-toast-close aria-label="Cerrar alerta"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
                         {% endfor %}
                     </div>
                 {% endif %}
@@ -1452,6 +1480,21 @@
                 }
             });
         })();
+
+        function dismissSystemToast(toast) {
+            if (!toast || toast.dataset.dismissed === "true") return;
+            toast.dataset.dismissed = "true";
+            toast.classList.add("leaving");
+            window.setTimeout(() => toast.remove(), 220);
+        }
+
+        document.querySelectorAll("[data-toast-close]").forEach((button) => {
+            button.addEventListener("click", () => dismissSystemToast(button.closest("[data-system-toast]")));
+        });
+
+        document.querySelectorAll("[data-system-toast]").forEach((toast, index) => {
+            window.setTimeout(() => dismissSystemToast(toast), 3500 + (index * 300));
+        });
     </script>
 </body>
 </html>

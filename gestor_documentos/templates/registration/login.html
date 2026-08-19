@@ -1,145 +1,63 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar sesi&oacute;n</title>
-    <style>
-        :root {
-            --bg: #f3f0ea;
-            --panel: #fffdf9;
-            --ink: #1f2933;
-            --muted: #6b7280;
-            --line: #ded6ca;
-            --accent: #1d4ed8;
-            --accent-strong: #173ea6;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--ink);
-            background:
-                radial-gradient(circle at top left, rgba(29, 78, 216, 0.10), transparent 35%),
-                linear-gradient(135deg, #f6f3ed 0%, #ece6dc 100%);
-            display: grid;
-            place-items: center;
-            padding: 24px;
-        }
-
-        .login-card {
-            width: min(100%, 400px);
-            background: var(--panel);
-            border: 1px solid rgba(222, 214, 202, 0.9);
-            border-radius: 24px;
-            box-shadow: 0 20px 50px rgba(31, 41, 51, 0.10);
-            padding: 40px 32px 32px;
-        }
-
-        h1 {
-            margin: 0 0 8px;
-            font-size: 2rem;
-            font-weight: 600;
-        }
-
-        p {
-            margin: 0 0 28px;
-            color: var(--muted);
-        }
-
-        form {
-            display: grid;
-            gap: 18px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
-        }
-
-        input {
-            width: 100%;
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 14px 16px;
-            font: inherit;
-            background: #fff;
-        }
-
-        input:focus {
-            outline: 2px solid rgba(29, 78, 216, 0.18);
-            border-color: var(--accent);
-        }
-
-        button {
-            border: 0;
-            border-radius: 14px;
-            padding: 14px 18px;
-            font: inherit;
-            font-weight: 600;
-            color: #fff;
-            background: var(--accent);
-            cursor: pointer;
-            transition: background 0.2s ease, transform 0.2s ease;
-        }
-
-        button:hover {
-            background: var(--accent-strong);
-            transform: translateY(-1px);
-        }
-
-        .errorlist,
-        .errornote {
-            margin: 0;
-            padding: 12px 14px;
-            list-style: none;
-            border-radius: 14px;
-            background: #fdecec;
-            color: #9f1d1d;
-            font-size: 0.92rem;
-        }
-
-        .hint {
-            margin-top: 18px;
-            font-size: 0.88rem;
-            color: var(--muted);
-        }
-    </style>
+    <title>Iniciar sesi&oacute;n | Gestos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'gestor_documentos/css/gestos-access.css' %}?v=3">
 </head>
 <body>
-    <main class="login-card">
-        <h1>Acceso</h1>
-        <p>Ingresa para continuar al gestor documental.</p>
-
-        {% if form.non_field_errors %}
-            <div class="errornote">{{ form.non_field_errors }}</div>
-        {% endif %}
-
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ next }}">
-
-            <div>
-                <label for="{{ form.username.id_for_label }}">Usuario</label>
-                {{ form.username }}
+    <main class="auth-shell">
+        <section class="auth-brand-panel">
+            <div class="auth-brand-copy">
+                <div class="auth-mark"><i class="fa-solid fa-file-lines"></i></div>
+                <span class="auth-eyebrow">Gestor documental</span>
+                <h1>Documentos claros.<br>Equipos alineados.</h1>
+                <p>Centraliza versiones, revisiones y seguimiento en un solo espacio de trabajo.</p>
             </div>
-
-            <div>
-                <label for="{{ form.password.id_for_label }}">Contrase&ntilde;a</label>
-                {{ form.password }}
+            <div class="auth-brand-footer">Gestos &nbsp;|&nbsp; Sistema interno</div>
+        </section>
+        <section class="auth-form-panel">
+            <div class="auth-card">
+                <div class="auth-mobile-brand"><span><i class="fa-solid fa-file-lines"></i></span> Gestos</div>
+                <span class="auth-kicker">Bienvenido</span>
+                <h2>Inicia sesi&oacute;n</h2>
+                <p class="auth-intro">Ingresa tus credenciales para continuar.</p>
+                {% if form.non_field_errors %}
+                    <div class="auth-alert" role="alert"><i class="fa-solid fa-circle-exclamation"></i><div><strong>No pudimos iniciar sesi&oacute;n</strong>{{ form.non_field_errors }}</div></div>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <div class="auth-field">
+                        <label for="{{ form.username.id_for_label }}">Usuario</label>
+                        <div class="auth-input-wrap"><i class="fa-regular fa-user"></i>{{ form.username }}</div>
+                        {{ form.username.errors }}
+                    </div>
+                    <div class="auth-field">
+                        <label for="{{ form.password.id_for_label }}">Contrase&ntilde;a</label>
+                        <div class="auth-input-wrap"><i class="fa-solid fa-lock"></i>{{ form.password }}<button class="password-toggle" type="button" data-password-toggle aria-label="Mostrar contrase&ntilde;a"><i class="fa-regular fa-eye"></i></button></div>
+                        {{ form.password.errors }}
+                    </div>
+                    <button class="auth-submit" type="submit">Entrar al sistema <i class="fa-solid fa-arrow-right"></i></button>
+                </form>
             </div>
-
-            <button type="submit">Iniciar sesi&oacute;n</button>
-        </form>
-
-        <div class="hint">Usuario inicial disponible: <strong>sa</strong></div>
+        </section>
     </main>
+    <script>
+        const toggle = document.querySelector("[data-password-toggle]");
+        const password = document.getElementById("{{ form.password.id_for_label }}");
+        toggle?.addEventListener("click", () => {
+            const visible = password.type === "text";
+            password.type = visible ? "password" : "text";
+            toggle.innerHTML = visible ? '<i class="fa-regular fa-eye"></i>' : '<i class="fa-regular fa-eye-slash"></i>';
+            toggle.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+        });
+    </script>
 </body>
 </html>
