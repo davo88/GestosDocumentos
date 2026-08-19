@@ -1,0 +1,73 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}Configuraciones | Gestor de Documentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Configuraciones</h1>
+        <p class="page-subtitle">Administra los datos sensibles que usa el sistema para sincronizar la documentaci&oacute;n.</p>
+    </div>
+</div>
+
+<div class="workspace-shell">
+    <div class="detail-card">
+        <h2>GitHub</h2>
+        <div class="detail-list">
+            <div class="detail-item">
+                <strong>Owner actual</strong>
+                <span>{{ configuracion.github_owner|default:"Sin definir" }}</span>
+            </div>
+            <div class="detail-item">
+                <strong>Repositorio actual</strong>
+                <span>{{ configuracion.github_repo|default:"Sin definir" }}</span>
+            </div>
+            <div class="detail-item">
+                <strong>Ultima actualizaci&oacute;n</strong>
+                <span>
+                    {% if configuracion.fecha_actualizacion %}
+                        {{ configuracion.fecha_actualizacion|date:"d/m/Y H:i" }}
+                    {% else %}
+                        Sin cambios registrados
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <h2>Conexion con GitHub</h2>
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="field">
+                <label for="{{ form.github_owner.id_for_label }}">Owner</label>
+                {{ form.github_owner }}
+                {% if form.github_owner.errors %}
+                    <div class="field-errors">{{ form.github_owner.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.github_repo.id_for_label }}">Repositorio</label>
+                {{ form.github_repo }}
+                {% if form.github_repo.errors %}
+                    <div class="field-errors">{{ form.github_repo.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.github_token.id_for_label }}">Token</label>
+                {{ form.github_token }}
+                {% if form.github_token.errors %}
+                    <div class="field-errors">{{ form.github_token.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="modal-actions">
+                <button class="primary-button" type="submit">Guardar configuraci&oacute;n</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

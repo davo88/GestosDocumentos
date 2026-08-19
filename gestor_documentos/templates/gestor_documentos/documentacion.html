@@ -1,0 +1,97 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}Documentacion | Gestor de Documentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Documentaci&oacute;n</h1>
+        <p class="page-subtitle">Consulta y registra los proyectos disponibles.</p>
+    </div>
+
+    {% if can_manage_documentacion %}
+        <button class="primary-button" type="button" data-open-modal>Nuevo proyecto</button>
+    {% endif %}
+</div>
+
+<div class="table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre de proyecto</th>
+                <th>Fecha de creaci&oacute;n</th>
+                <th>Trazabilidad</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proyecto in proyectos %}
+                <tr>
+                    <td>{{ proyecto.nombre }}</td>
+                    <td>{{ proyecto.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        Creado por {{ proyecto.created_by.username|default:"Sistema" }}<br>
+                        Ultima modificaci&oacute;n por {{ proyecto.updated_by.username|default:"Sistema" }}
+                    </td>
+                    <td class="table-actions">
+                        <a class="primary-button table-button" href="{% url 'documentacion_proyecto' proyecto.id %}">Ver documentaci&oacute;n</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="empty-state">A&uacute;n no hay proyectos registrados.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if can_manage_documentacion %}
+    <div class="modal-backdrop {% if modal_abierto %}open{% endif %}" id="nuevo-proyecto-modal">
+        <div class="modal">
+            <h2>Nuevo proyecto</h2>
+            <p>Captura el nombre del proyecto para agregarlo al listado.</p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="field">
+                    <label for="{{ form.nombre.id_for_label }}">Nombre de proyecto</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                        <div class="field-errors">{{ form.nombre.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary-button" type="button" data-close-modal>Cancelar</button>
+                    <button class="primary-button" type="submit">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+    (function () {
+        const modal = document.getElementById("nuevo-proyecto-modal");
+        const openButton = document.querySelector("[data-open-modal]");
+        const closeButton = document.querySelector("[data-close-modal]");
+
+        if (!modal || !openButton || !closeButton) {
+            return;
+        }
+
+        const openModal = () => modal.classList.add("open");
+        const closeModal = () => modal.classList.remove("open");
+
+        openButton.addEventListener("click", openModal);
+        closeButton.addEventListener("click", closeModal);
+        modal.addEventListener("click", (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    })();
+</script>
+{% endblock %}

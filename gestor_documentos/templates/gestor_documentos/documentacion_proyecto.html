@@ -1,0 +1,605 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}{{ proyecto.nombre }} | Documentacion{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{{ proyecto.nombre }}</h1>
+        <p class="page-subtitle">Organiza carpetas para centralizar la documentaci&oacute;n del proyecto.</p>
+    </div>
+
+    {% if can_manage_documentacion %}
+        <button class="primary-button" type="button" data-open-modal>Nueva carpeta</button>
+    {% endif %}
+</div>
+
+<div class="workspace-shell">
+    <div class="workspace-toolbar">
+        <div class="breadcrumbs">
+            {% for item in breadcrumbs %}
+                {% if item.url %}
+                    <a href="{{ item.url }}">{{ item.label }}</a>
+                {% else %}
+                    <span>{{ item.label }}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <a class="secondary-button" href="{% url 'documentacion' %}">Volver a proyectos</a>
+    </div>
+
+    <div class="documents-empty">
+        Proyecto creado por {{ proyecto.created_by.username|default:"Sistema" }}.
+        Ultima modificaci&oacute;n registrada por {{ proyecto.updated_by.username|default:"Sistema" }}.
+    </div>
+
+    <div class="workspace-summary">
+        <div class="summary-card">
+            <strong>{{ carpetas|length }}</strong>
+            <span>carpetas en este nivel</span>
+        </div>
+        <div class="summary-card">
+            <strong>{{ documentos|length }}</strong>
+            <span>documentos en este nivel</span>
+        </div>
+        <div class="summary-card">
+            <strong>{% if carpeta_actual %}{{ carpeta_actual.nombre }}{% else %}Ra&iacute;z{% endif %}</strong>
+            <span>ubicaci&oacute;n actual</span>
+        </div>
+    </div>
+
+    <div class="folder-grid">
+        {% for carpeta in carpetas %}
+            <a class="folder-card" href="?carpeta={{ carpeta.id }}">
+                <div class="folder-icon">+</div>
+                <div class="folder-name">{{ carpeta.nombre }}</div>
+                <div class="folder-meta">
+                    {{ carpeta.fecha_creacion|date:"d/m/Y H:i" }}<br>
+                    Creada por {{ carpeta.created_by.username|default:"Sistema" }}<br>
+                    Modificada por {{ carpeta.updated_by.username|default:"Sistema" }}
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+
+    <form class="documents-card documents-dropzone" method="post" enctype="multipart/form-data" id="upload-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="subir_documentos">
+        <div class="documents-header">
+            <div>
+                <h2>Documentos</h2>
+                <span>{{ documentos|length }} archivo{{ documentos|length|pluralize }}</span>
+            </div>
+            {% if can_manage_documentacion %}
+                <div class="documents-tools">
+                    <label class="secondary-button picker-button" for="{{ upload_form.archivos.id_for_label }}">Seleccionar archivos</label>
+                    <button class="primary-button" type="submit">Subir documentos</button>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if can_manage_documentacion %}
+            <label class="documents-hint" for="{{ upload_form.archivos.id_for_label }}" id="dropzone">
+                <span class="documents-hint-strong">Arrastra archivos aqu&iacute;</span>
+                <span>o haz clic en seleccionar archivos para abrir el explorador de tu PC. Tipos permitidos: .docx, .txt y .md.</span>
+                {{ upload_form.archivos }}
+
+                <div class="selected-files" id="selected-files">Ning&uacute;n archivo seleccionado.</div>
+                <div class="selected-files-list" id="selected-files-list"></div>
+            </label>
+        {% endif %}
+
+        <div class="documents-list">
+            {% for documento in documentos %}
+                <div class="document-row">
+                    <div class="document-icon">DOC</div>
+                    <div class="document-main">
+                        <strong>{{ documento.nombre }}</strong>
+                        <span>
+                            Ultima carga {{ documento.fecha_actualizacion|date:"d/m/Y H:i" }} |
+                            {{ documento.versiones.count }} version{{ documento.versiones.count|pluralize:"es" }} |
+                            original {{ documento.extension_original }} |
+                            creado por {{ documento.created_by.username|default:"Sistema" }} |
+                            modificado por {{ documento.updated_by.username|default:"Sistema" }}
+                        </span>
+                        <div class="document-status">
+                            <div class="document-status-badge {{ documento.status_class }}">{{ documento.status_label }}</div>
+                            {% if documento.status_detail %}
+                                <span>{{ documento.status_detail }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="document-actions">
+                        <a class="document-link" href="{% url 'documento_visualizador' proyecto.id documento.id %}">Abrir</a>
+                        <a class="document-link emphasis" href="{% url 'documento_cambios' proyecto.id documento.id %}">Ver cambios</a>
+                        {% if is_visualizador_user and documento.status_class != "reviewed" %}
+                            <button
+                                class="document-link emphasis"
+                                type="button"
+                                data-open-ticket-modal
+                                data-document-id="{{ documento.id }}"
+                                data-document-name="{{ documento.nombre }}"
+                            >
+                                Revisar
+                            </button>
+                        {% endif %}
+                        {% if can_manage_documentacion %}
+                            <button
+                                class="document-link document-delete"
+                                type="button"
+                                data-delete-document
+                                data-document-id="{{ documento.id }}"
+                                data-document-name="{{ documento.nombre }}"
+                            >
+                                Eliminar
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                {% if not carpetas %}
+                    <div class="folder-empty">
+                        <h2>Espacio listo para cargar</h2>
+                        <p>Crea carpetas o sube archivos desde el explorador de tu equipo o con arrastrar y soltar.</p>
+                        {% if can_manage_documentacion %}
+                            <button class="primary-button" type="button" data-open-empty-modal>Nueva carpeta</button>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="documents-empty">Todav&iacute;a no hay documentos en este nivel.</div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </form>
+</div>
+
+{% if can_manage_documentacion %}
+    <form method="post" id="delete-document-form" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="eliminar_documento">
+        <input type="hidden" name="documento_id" id="delete-document-id">
+    </form>
+{% endif %}
+
+{% if can_manage_documentacion %}
+    <div class="modal-backdrop {% if modal_abierto %}open{% endif %}" id="nueva-carpeta-modal">
+        <div class="modal">
+            <h2>Nueva carpeta</h2>
+            <p>
+                Se crear&aacute; en
+                <strong>{% if carpeta_actual %}{{ carpeta_actual.nombre }}{% else %}la ra&iacute;z del proyecto{% endif %}</strong>.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crear_carpeta">
+
+                <div class="field">
+                    <label for="{{ folder_form.nombre.id_for_label }}">Nombre de carpeta</label>
+                    {{ folder_form.nombre }}
+                    {% if folder_form.nombre.errors %}
+                        <div class="field-errors">{{ folder_form.nombre.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary-button" type="button" data-close-modal>Cancelar</button>
+                    <button class="primary-button" type="submit">Crear carpeta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+{% if is_visualizador_user %}
+    <div class="modal-backdrop {% if ticket_modal_abierto %}open{% endif %}" id="nuevo-ticket-modal">
+        <div class="modal">
+            <h2>Revisar documento</h2>
+            <p>
+                Acci&oacute;n sobre el documento
+                <strong id="ticket-document-name">seleccionado</strong>.
+            </p>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="revisar_documento">
+                <input type="hidden" name="documento_id" id="ticket-document-id" value="{{ request.POST.documento_id }}">
+
+                <div class="field" id="ticket-number-field">
+                    <label>Numero de ticket</label>
+                    <input type="text" value="{{ proximo_ticket_numero }}" readonly>
+                </div>
+
+                <div class="field">
+                    <label for="{{ ticket_form.tipo.id_for_label }}">Tipo</label>
+                    {{ ticket_form.tipo }}
+                    {% if ticket_form.tipo.errors %}
+                        <div class="field-errors">{{ ticket_form.tipo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field" id="ticket-title-field">
+                    <label for="{{ ticket_form.titulo.id_for_label }}">Titulo del ticket</label>
+                    {{ ticket_form.titulo }}
+                    {% if ticket_form.titulo.errors %}
+                        <div class="field-errors">{{ ticket_form.titulo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ ticket_form.descripcion.id_for_label }}" id="ticket-description-label">Descripcion del ticket</label>
+                    {{ ticket_form.descripcion }}
+                    {% if ticket_form.descripcion.errors %}
+                        <div class="field-errors">{{ ticket_form.descripcion.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field" id="ticket-attachments-field">
+                    <label for="{{ ticket_form.adjuntos.id_for_label }}">Adjuntos</label>
+                    {{ ticket_form.adjuntos }}
+                    <div class="selected-files">Puedes adjuntar imagenes o documentos de apoyo.</div>
+                    {% if ticket_form.adjuntos.errors %}
+                        <div class="field-errors">{{ ticket_form.adjuntos.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary-button" type="button" data-close-ticket-modal>Cancelar</button>
+                    <button class="primary-button" type="submit">Guardar ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+{% if can_manage_documentacion %}
+    <div class="modal-backdrop" id="upload-progress-modal">
+        <div class="modal" style="width:min(100%, 720px);">
+            <h2>Procesando documentos</h2>
+            <p id="upload-progress-copy">
+                El sistema esta preparando la carga. No cierres esta pantalla mientras termina la conversion y sincronizacion.
+            </p>
+
+            <div class="detail-card" style="padding: 18px;">
+                <div class="pending-document-head">
+                    <div class="pending-document-title">
+                        <strong id="upload-current-file">Esperando archivos...</strong>
+                        <div class="pending-document-meta" id="upload-current-stage">Listo para comenzar.</div>
+                    </div>
+                    <div class="document-status-badge pending" id="upload-progress-value">0%</div>
+                </div>
+                <div style="height: 12px; background: #edf1fb; border-radius: 999px; overflow: hidden;">
+                    <div id="upload-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #1d4ed8 0%, #4f8cff 100%); transition: width 0.22s ease;"></div>
+                </div>
+            </div>
+
+            <div class="activity-card" style="padding: 18px;">
+                <div class="section-head">
+                    <h2 style="font-size: 1rem;">Detalle por documento</h2>
+                    <span class="activity-time" id="upload-progress-counter">0 de 0 completados</span>
+                </div>
+                <div class="activity-list" id="upload-progress-list"></div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="primary-button" type="button" id="upload-progress-ok" style="display:none;">Ok</button>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+    (function () {
+        const modal = document.getElementById("nueva-carpeta-modal");
+        const openButtons = document.querySelectorAll("[data-open-modal], [data-open-empty-modal]");
+        const closeButton = document.querySelector("[data-close-modal]");
+        const dropzone = document.getElementById("dropzone");
+        const fileInput = document.getElementById("{{ upload_form.archivos.id_for_label }}");
+        const selectedFiles = document.getElementById("selected-files");
+        const selectedFilesList = document.getElementById("selected-files-list");
+        const deleteForm = document.getElementById("delete-document-form");
+        const deleteDocumentId = document.getElementById("delete-document-id");
+        const deleteButtons = document.querySelectorAll("[data-delete-document]");
+        const ticketModal = document.getElementById("nuevo-ticket-modal");
+        const ticketButtons = document.querySelectorAll("[data-open-ticket-modal]");
+        const closeTicketButton = document.querySelector("[data-close-ticket-modal]");
+        const ticketDocumentId = document.getElementById("ticket-document-id");
+        const ticketDocumentName = document.getElementById("ticket-document-name");
+        const ticketTypeField = document.getElementById("{{ ticket_form.tipo.id_for_label }}");
+        const ticketTitleField = document.getElementById("ticket-title-field");
+        const ticketNumberField = document.getElementById("ticket-number-field");
+        const ticketAttachmentsField = document.getElementById("ticket-attachments-field");
+        const ticketDescriptionLabel = document.getElementById("ticket-description-label");
+        const uploadForm = document.getElementById("upload-form");
+        const uploadProgressModal = document.getElementById("upload-progress-modal");
+        const uploadProgressCopy = document.getElementById("upload-progress-copy");
+        const uploadProgressValue = document.getElementById("upload-progress-value");
+        const uploadProgressBar = document.getElementById("upload-progress-bar");
+        const uploadCurrentFile = document.getElementById("upload-current-file");
+        const uploadCurrentStage = document.getElementById("upload-current-stage");
+        const uploadProgressList = document.getElementById("upload-progress-list");
+        const uploadProgressCounter = document.getElementById("upload-progress-counter");
+        const uploadProgressOk = document.getElementById("upload-progress-ok");
+
+        if (modal && closeButton && openButtons.length) {
+            const openModal = () => modal.classList.add("open");
+            const closeModal = () => modal.classList.remove("open");
+
+            openButtons.forEach((button) => button.addEventListener("click", openModal));
+            closeButton.addEventListener("click", closeModal);
+            modal.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+
+        if (ticketModal && closeTicketButton && ticketButtons.length && ticketDocumentId && ticketDocumentName) {
+            const closeTicketModal = () => ticketModal.classList.remove("open");
+            const syncReviewType = () => {
+                if (!ticketTypeField || !ticketTitleField || !ticketNumberField || !ticketAttachmentsField || !ticketDescriptionLabel) {
+                    return;
+                }
+                const isTicket = ticketTypeField.value === "ticket";
+                ticketTitleField.style.display = isTicket ? "block" : "none";
+                ticketNumberField.style.display = isTicket ? "block" : "none";
+                ticketAttachmentsField.style.display = isTicket ? "block" : "none";
+                ticketDescriptionLabel.textContent = isTicket ? "Descripcion del ticket" : "Comentario de revision";
+            };
+
+            ticketButtons.forEach((button) => {
+                button.addEventListener("click", () => {
+                    ticketDocumentId.value = button.getAttribute("data-document-id");
+                    ticketDocumentName.textContent = button.getAttribute("data-document-name");
+                    syncReviewType();
+                    ticketModal.classList.add("open");
+                });
+            });
+
+            if (ticketTypeField) {
+                ticketTypeField.addEventListener("change", syncReviewType);
+                syncReviewType();
+            }
+
+            closeTicketButton.addEventListener("click", closeTicketModal);
+            ticketModal.addEventListener("click", (event) => {
+                if (event.target === ticketModal) {
+                    closeTicketModal();
+                }
+            });
+        }
+
+        if (dropzone && fileInput && selectedFiles && selectedFilesList) {
+            const renderSelectedFiles = (files) => {
+                if (!files.length) {
+                    selectedFiles.textContent = "Ningun archivo seleccionado.";
+                    selectedFiles.classList.remove("has-files");
+                    selectedFilesList.classList.remove("has-files");
+                    selectedFilesList.innerHTML = "";
+                    return;
+                }
+
+                selectedFiles.textContent = files.length === 1
+                    ? "1 archivo listo para subir"
+                    : `${files.length} archivos listos para subir`;
+                selectedFiles.classList.add("has-files");
+                selectedFilesList.classList.add("has-files");
+                selectedFilesList.innerHTML = Array.from(files)
+                    .map((file) => `
+                        <div class="selected-file-item">
+                            <div class="selected-file-badge">DOC</div>
+                            <div class="selected-file-name">${file.name}</div>
+                        </div>
+                    `)
+                    .join("");
+            };
+
+            fileInput.addEventListener("change", () => renderSelectedFiles(fileInput.files));
+
+            ["dragenter", "dragover"].forEach((eventName) => {
+                dropzone.addEventListener(eventName, (event) => {
+                    event.preventDefault();
+                    dropzone.classList.add("dragover");
+                });
+            });
+
+            ["dragleave", "dragend"].forEach((eventName) => {
+                dropzone.addEventListener(eventName, () => {
+                    dropzone.classList.remove("dragover");
+                });
+            });
+
+            dropzone.addEventListener("drop", (event) => {
+                event.preventDefault();
+                dropzone.classList.remove("dragover");
+                if (!event.dataTransfer.files.length) {
+                    return;
+                }
+
+                fileInput.files = event.dataTransfer.files;
+                renderSelectedFiles(fileInput.files);
+            });
+        }
+
+        if (uploadForm && fileInput && uploadProgressModal && uploadProgressValue && uploadProgressBar && uploadCurrentFile && uploadCurrentStage && uploadProgressList && uploadProgressCounter && uploadProgressOk) {
+            const csrfToken = uploadForm.querySelector("input[name='csrfmiddlewaretoken']");
+            let stageTimers = [];
+
+            const setProgress = (percent) => {
+                const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+                uploadProgressValue.textContent = `${safePercent}%`;
+                uploadProgressBar.style.width = `${safePercent}%`;
+            };
+
+            const clearStageTimers = () => {
+                stageTimers.forEach((timerId) => window.clearTimeout(timerId));
+                stageTimers = [];
+            };
+
+            const setStagePlan = (fileName) => {
+                clearStageTimers();
+                uploadCurrentFile.textContent = fileName;
+                uploadCurrentStage.textContent = "Subiendo al servidor...";
+                stageTimers.push(window.setTimeout(() => {
+                    uploadCurrentStage.textContent = "Convirtiendo a Markdown...";
+                }, 700));
+                stageTimers.push(window.setTimeout(() => {
+                    uploadCurrentStage.textContent = "Guardando en el sistema...";
+                }, 1600));
+                stageTimers.push(window.setTimeout(() => {
+                    uploadCurrentStage.textContent = "Sincronizando con GitHub...";
+                }, 2500));
+            };
+
+            const renderUploadRows = (files) => {
+                uploadProgressList.innerHTML = files.map((file, index) => `
+                    <article class="activity-item" data-upload-row="${index}">
+                        <div class="pending-document-head">
+                            <div class="pending-document-title">
+                                <strong>${file.name}</strong>
+                                <div class="pending-document-meta" data-upload-stage>En espera</div>
+                            </div>
+                            <div class="document-status-badge neutral" data-upload-state>Pendiente</div>
+                        </div>
+                    </article>
+                `).join("");
+                uploadProgressCounter.textContent = `0 de ${files.length} completados`;
+            };
+
+            const updateRow = (index, stageText, badgeText, badgeClass) => {
+                const row = uploadProgressList.querySelector(`[data-upload-row="${index}"]`);
+                if (!row) {
+                    return;
+                }
+                const stage = row.querySelector("[data-upload-stage]");
+                const badge = row.querySelector("[data-upload-state]");
+                if (stage) {
+                    stage.textContent = stageText;
+                }
+                if (badge) {
+                    badge.textContent = badgeText;
+                    badge.className = `document-status-badge ${badgeClass}`;
+                }
+            };
+
+            const uploadSingleFile = (file, index, totalFiles, completedFiles) => new Promise((resolve) => {
+                const xhr = new XMLHttpRequest();
+                const formData = new FormData();
+                formData.append("csrfmiddlewaretoken", csrfToken ? csrfToken.value : "");
+                formData.append("action", "subir_documento_ajax");
+                formData.append("archivo", file);
+
+                setStagePlan(file.name);
+                updateRow(index, "Subiendo al servidor...", "En proceso", "pending");
+
+                xhr.open("POST", window.location.href, true);
+                xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+                xhr.upload.addEventListener("progress", (event) => {
+                    if (!event.lengthComputable) {
+                        return;
+                    }
+                    const fileProgress = event.loaded / event.total;
+                    const overall = ((completedFiles + fileProgress) / totalFiles) * 100;
+                    setProgress(overall);
+                });
+
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState !== XMLHttpRequest.DONE) {
+                        return;
+                    }
+                    clearStageTimers();
+
+                    let payload = {};
+                    try {
+                        payload = JSON.parse(xhr.responseText || "{}");
+                    } catch (error) {
+                        payload = {};
+                    }
+
+                    if (xhr.status >= 200 && xhr.status < 300 && payload.ok) {
+                        setProgress(((completedFiles + 1) / totalFiles) * 100);
+                        uploadCurrentStage.textContent = payload.message || "Documento completado.";
+                        updateRow(
+                            index,
+                            payload.message || "Completado",
+                            payload.result === "ignored" ? "Sin cambios" : "Completado",
+                            payload.result === "ignored" ? "neutral" : "reviewed"
+                        );
+                        resolve({ ok: true, result: payload.result });
+                        return;
+                    }
+
+                    const errorMessage = payload.message || "No se pudo procesar este documento.";
+                    uploadCurrentStage.textContent = errorMessage;
+                    updateRow(index, errorMessage, "Error", "outdated");
+                    resolve({ ok: false, result: "error", message: errorMessage });
+                };
+
+                xhr.send(formData);
+            });
+
+            uploadForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const files = Array.from(fileInput.files || []);
+                if (!files.length) {
+                    window.alert("Selecciona al menos un archivo para cargar.");
+                    return;
+                }
+
+                uploadProgressModal.classList.add("open");
+                uploadProgressOk.style.display = "none";
+                uploadProgressCopy.textContent = "El sistema esta procesando cada documento. Veras en tiempo real cuando se convierta, se guarde y se sincronice.";
+                setProgress(0);
+                renderUploadRows(files);
+
+                let completed = 0;
+                let hadErrors = false;
+
+                for (let index = 0; index < files.length; index += 1) {
+                    const result = await uploadSingleFile(files[index], index, files.length, completed);
+                    completed += 1;
+                    uploadProgressCounter.textContent = `${completed} de ${files.length} completados`;
+                    if (!result.ok) {
+                        hadErrors = true;
+                    }
+                }
+
+                clearStageTimers();
+                uploadCurrentFile.textContent = hadErrors
+                    ? "Proceso terminado con observaciones"
+                    : "Carga completada";
+                uploadCurrentStage.textContent = hadErrors
+                    ? "Revisa los documentos marcados con error antes de continuar."
+                    : "Todos los documentos terminaron su conversion y sincronizacion.";
+                uploadProgressCopy.textContent = hadErrors
+                    ? "Algunos archivos no pudieron terminar correctamente. Puedes revisar el detalle por documento antes de salir."
+                    : "La documentacion ya se actualizo en el sistema y en GitHub.";
+                uploadProgressOk.style.display = "inline-flex";
+            });
+
+            uploadProgressOk.addEventListener("click", () => {
+                window.location.reload();
+            });
+        }
+
+        if (deleteForm && deleteDocumentId && deleteButtons.length) {
+            deleteButtons.forEach((button) => {
+                button.addEventListener("click", () => {
+                    const documentId = button.getAttribute("data-document-id");
+                    const documentName = button.getAttribute("data-document-name");
+                    const confirmed = window.confirm(
+                        `Vas a eliminar "${documentName}". Esta accion tambien borrara su Markdown de GitHub. Deseas continuar?`
+                    );
+                    if (!confirmed) {
+                        return;
+                    }
+                    deleteDocumentId.value = documentId;
+                    deleteForm.submit();
+                });
+            });
+        }
+    })();
+</script>
+{% endblock %}

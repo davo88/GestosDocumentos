@@ -1,0 +1,332 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}Cambios | {{ documento.nombre }}{% endblock %}
+
+{% block content %}
+<style>
+    .document-preview-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .document-preview-card {
+        background: #ffffff;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 28px;
+        box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+
+    .document-preview-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        background: linear-gradient(135deg, #f8faf7, #eef6ef);
+    }
+
+    .document-preview-head strong,
+    .document-preview-head span {
+        display: block;
+    }
+
+    .document-preview-head span {
+        color: #60746b;
+        font-size: 0.9rem;
+        margin-top: 0.2rem;
+    }
+
+    .document-preview-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+    }
+
+    .document-preview-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        color: #41524c;
+        padding: 0.3rem 0.65rem;
+        border-radius: 999px;
+        background: #f8fafc;
+    }
+
+    .document-preview-legend i {
+        width: 0.7rem;
+        height: 0.7rem;
+        border-radius: 999px;
+        display: inline-block;
+    }
+
+    .document-preview-body {
+        max-height: 38rem;
+        overflow: auto;
+        padding: 1.35rem;
+        background: #fcfcfb;
+    }
+
+    .doc-preview-block,
+    .doc-preview-table-wrap,
+    .doc-preview-list-wrap,
+    .doc-preview-spacer {
+        border-left: 4px solid transparent;
+        border-radius: 16px;
+        padding: 0.25rem 0.85rem;
+        margin-bottom: 0.45rem;
+    }
+
+    .doc-preview-block p,
+    .doc-preview-block h1,
+    .doc-preview-block h2,
+    .doc-preview-block h3,
+    .doc-preview-block h4,
+    .doc-preview-block h5,
+    .doc-preview-block h6 {
+        margin: 0.45rem 0;
+        line-height: 1.65;
+    }
+
+    .doc-preview-list {
+        margin: 0.3rem 0 0.3rem 1.2rem;
+        padding: 0;
+    }
+
+    .doc-preview-list li {
+        margin-bottom: 0.35rem;
+        padding: 0.35rem 0.55rem;
+        border-radius: 12px;
+        line-height: 1.55;
+    }
+
+    .doc-preview-table-wrap {
+        overflow-x: auto;
+        padding: 0;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .doc-preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 520px;
+        background: #ffffff;
+    }
+
+    .doc-preview-table th,
+    .doc-preview-table td {
+        padding: 0.72rem 0.82rem;
+        border-right: 1px solid rgba(148, 163, 184, 0.12);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        text-align: left;
+        vertical-align: top;
+        line-height: 1.55;
+    }
+
+    .doc-preview-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .doc-preview-table th:last-child,
+    .doc-preview-table td:last-child {
+        border-right: none;
+    }
+
+    .state-equal {
+        background: rgba(255, 255, 255, 0.8);
+        border-left-color: rgba(148, 163, 184, 0.36);
+    }
+
+    .state-added {
+        background: rgba(34, 197, 94, 0.12);
+        border-left-color: #16a34a;
+    }
+
+    .state-removed {
+        background: rgba(239, 68, 68, 0.12);
+        border-left-color: #dc2626;
+    }
+
+    .state-changed {
+        background: rgba(245, 158, 11, 0.16);
+        border-left-color: #d97706;
+    }
+
+    .state-removed p,
+    .state-removed li,
+    .state-removed td,
+    .state-removed th {
+        text-decoration: line-through;
+    }
+
+    .legend-equal i {
+        background: rgba(148, 163, 184, 0.8);
+    }
+
+    .legend-added i {
+        background: #16a34a;
+    }
+
+    .legend-removed i {
+        background: #dc2626;
+    }
+
+    .legend-changed i {
+        background: #d97706;
+    }
+
+    @media (max-width: 980px) {
+        .document-preview-shell {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Cambios de {{ documento.nombre }}</h1>
+        <p class="page-subtitle">Compara versiones del Markdown generado para identificar exactamente qu&eacute; cambi&oacute; antes de pasar a desarrollo.</p>
+    </div>
+
+    <a class="secondary-button" href="{% url 'documentacion_proyecto' proyecto.id %}{% if documento.carpeta_id %}?carpeta={{ documento.carpeta_id }}{% endif %}">Volver al explorador</a>
+</div>
+
+<div class="workspace-shell">
+    <div class="workspace-toolbar">
+        <div class="breadcrumbs">
+            {% for item in breadcrumbs %}
+                {% if item.url %}
+                    <a href="{{ item.url }}">{{ item.label }}</a>
+                {% else %}
+                    <span>{{ item.label }}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <form class="compare-form" method="get">
+        <div class="compare-field">
+            <label for="base">Versi&oacute;n base</label>
+            <select id="base" name="base">
+                {% for version in versiones %}
+                    <option value="{{ version.version }}" {% if version.version == version_base.version %}selected{% endif %}>
+                        Versi&oacute;n {{ version.version }} - {{ version.fecha_creacion|date:"d/m/Y H:i" }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="compare-field">
+            <label for="actual">Versi&oacute;n comparada</label>
+            <select id="actual" name="actual">
+                {% for version in versiones %}
+                    <option value="{{ version.version }}" {% if version.version == version_actual.version %}selected{% endif %}>
+                        Versi&oacute;n {{ version.version }} - {{ version.fecha_creacion|date:"d/m/Y H:i" }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button class="primary-button" type="submit">Actualizar comparaci&oacute;n</button>
+    </form>
+
+    <div class="document-preview-shell">
+        <section class="document-preview-card">
+            <div class="document-preview-head">
+                <div>
+                    <strong>Vista documento comparado</strong>
+                    <span>Versi&oacute;n {{ version_actual.version }} con los cambios m&aacute;s visibles</span>
+                </div>
+                <div class="document-preview-legend">
+                    <span class="legend-equal"><i></i>Sin cambio</span>
+                    <span class="legend-added"><i></i>Agregado</span>
+                    <span class="legend-changed"><i></i>Modificado</span>
+                </div>
+            </div>
+            <div class="document-preview-body">
+                {{ actual_preview_html|safe }}
+            </div>
+        </section>
+    </div>
+
+    <div class="diff-summary">
+        <div class="diff-card added">
+            <strong>{{ diff_summary.added }}</strong>
+            <span>L&iacute;neas agregadas</span>
+        </div>
+        <div class="diff-card removed">
+            <strong>{{ diff_summary.removed }}</strong>
+            <span>L&iacute;neas eliminadas</span>
+        </div>
+        <div class="diff-card changed">
+            <strong>{{ diff_summary.changed }}</strong>
+            <span>L&iacute;neas modificadas</span>
+        </div>
+        <div class="diff-card unchanged">
+            <strong>{{ diff_summary.unchanged }}</strong>
+            <span>L&iacute;neas sin cambio</span>
+        </div>
+    </div>
+
+    <div class="workspace-summary">
+        <div class="summary-card">
+            <strong>Versi&oacute;n {{ version_base.version }}</strong>
+            <span>Base del {{ version_base.fecha_creacion|date:"d/m/Y H:i" }} por {{ version_base.created_by.username|default:"Sistema" }}</span>
+        </div>
+        <div class="summary-card">
+            <strong>Versi&oacute;n {{ version_actual.version }}</strong>
+            <span>Comparada del {{ version_actual.fecha_creacion|date:"d/m/Y H:i" }} por {{ version_actual.created_by.username|default:"Sistema" }}</span>
+        </div>
+        <div class="summary-card">
+            <strong>{{ versiones|length }}</strong>
+            <span>versiones disponibles</span>
+        </div>
+    </div>
+
+    <div class="diff-table-wrap">
+        <table class="diff-table">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>L&iacute;nea base</th>
+                    <th>Contenido base</th>
+                    <th>L&iacute;nea nueva</th>
+                    <th>Contenido nuevo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in diff_rows %}
+                    <tr class="diff-row-{{ row.kind }}">
+                        <td class="diff-kind">
+                            {% if row.kind == "equal" %}Sin cambio{% endif %}
+                            {% if row.kind == "added" %}Agregado{% endif %}
+                            {% if row.kind == "removed" %}Eliminado{% endif %}
+                            {% if row.kind == "changed" %}Modificado{% endif %}
+                        </td>
+                        <td class="diff-line">{{ row.old_number }}</td>
+                        <td class="diff-content">{{ row.old_text|default:"" }}</td>
+                        <td class="diff-line">{{ row.new_number }}</td>
+                        <td class="diff-content">{{ row.new_text|default:"" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="documents-empty">No hay diferencias para mostrar entre estas versiones.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="version-timeline">
+        {% for version in versiones %}
+            <div class="version-card">
+                <strong>Versi&oacute;n {{ version.version }}</strong>
+                <span>Generada el {{ version.fecha_creacion|date:"d/m/Y H:i" }} por {{ version.created_by.username|default:"Sistema" }}</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

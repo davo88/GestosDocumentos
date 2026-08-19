@@ -1,0 +1,339 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}Inicio | Gestor de Documentos{% endblock %}
+
+{% block content %}
+<style>
+    .dashboard-shell {
+        display: grid;
+        gap: 24px;
+    }
+
+    .dashboard-hero {
+        display: grid;
+        gap: 10px;
+        padding: 30px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background:
+            radial-gradient(circle at top right, rgba(29, 78, 216, 0.1), transparent 32%),
+            linear-gradient(180deg, #fffdf9 0%, #f8f2e7 100%);
+    }
+
+    .dashboard-kicker {
+        color: var(--accent);
+        font-size: 0.86rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .dashboard-hero h1 {
+        margin: 0;
+        font-size: 2.2rem;
+    }
+
+    .dashboard-hero p {
+        margin: 0;
+        max-width: 760px;
+        color: var(--muted);
+        line-height: 1.6;
+    }
+
+    .activity-card {
+        display: grid;
+        gap: 18px;
+        padding: 26px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: #fff;
+    }
+
+    .activity-card h2 {
+        margin: 0;
+    }
+
+    .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .activity-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .activity-item {
+        display: grid;
+        gap: 8px;
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: #fffdf9;
+    }
+
+    .activity-eyebrow {
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 700;
+    }
+
+    .activity-title {
+        font-size: 1.02rem;
+        font-weight: 800;
+    }
+
+    .activity-subtitle {
+        color: var(--muted);
+    }
+
+    .activity-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .activity-time {
+        color: var(--muted);
+        font-size: 0.9rem;
+    }
+
+    .pending-documents {
+        display: grid;
+        gap: 14px;
+    }
+
+    .pending-document {
+        display: grid;
+        gap: 10px;
+        padding: 20px 22px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: #fff;
+    }
+
+    .pending-document-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .pending-document-title {
+        display: grid;
+        gap: 6px;
+    }
+
+    .pending-document-title strong {
+        font-size: 1rem;
+    }
+
+    .pending-document-meta {
+        color: var(--muted);
+        font-size: 0.92rem;
+    }
+
+    .pending-document-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+        .dashboard-hero h1 {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+
+<div class="dashboard-shell">
+    <section class="dashboard-hero">
+        <div class="dashboard-kicker">{{ dashboard_role }}</div>
+        <h1>{{ dashboard_title }}</h1>
+        <p>
+            Mant&eacute;n claro qu&eacute; te toca revisar hoy, qu&eacute; ya avanz&oacute; el equipo y d&oacute;nde conviene entrar primero para que la documentaci&oacute;n no se descontrole.
+        </p>
+    </section>
+
+    {% if is_visualizador_user %}
+        <section class="activity-card">
+            <div class="section-head">
+                <h2>Documentos con cambios sin revisar</h2>
+                <span class="activity-time">{{ pending_documents|length }} pendientes visibles</span>
+            </div>
+            <div class="pending-documents">
+                {% for item in pending_documents %}
+                    <article class="pending-document">
+                        <div class="pending-document-head">
+                            <div class="pending-document-title">
+                                <strong>{{ item.nombre }}</strong>
+                                <div class="pending-document-meta">{{ item.proyecto_nombre }} / {{ item.ubicacion }}</div>
+                            </div>
+                            <div class="document-status-badge {{ item.status_class }}">{{ item.status_label }}</div>
+                        </div>
+                        <div class="pending-document-meta">{{ item.status_detail }}</div>
+                        <div class="pending-document-actions">
+                            <a class="document-link" href="{{ item.archivo_url }}" target="_blank" rel="noopener noreferrer">Abrir</a>
+                            <a class="document-link emphasis" href="{{ item.cambios_url }}">Ver cambios</a>
+                            <button
+                                class="document-link emphasis"
+                                type="button"
+                                data-open-review-modal
+                                data-document-id="{{ item.id }}"
+                                data-document-name="{{ item.nombre }}"
+                            >
+                                Revisar
+                            </button>
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="documents-empty">No hay documentos pendientes por revisar en este momento.</div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    <section class="activity-card">
+        <div class="section-head">
+            <h2>Actividad reciente</h2>
+            <span class="activity-time">Se muestra la actividad global del sistema</span>
+        </div>
+        <div class="activity-list">
+            {% for item in recent_activity %}
+                <article class="activity-item">
+                    <div class="activity-eyebrow">{{ item.eyebrow }}</div>
+                    <div class="activity-title">{{ item.title }}</div>
+                    <div class="activity-subtitle">{{ item.subtitle }}</div>
+                    <div class="activity-footer">
+                        <div class="activity-time">Hace {{ item.timestamp|timesince }}</div>
+                        <a class="document-link emphasis" href="{{ item.action_url }}">{{ item.action_label }}</a>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="documents-empty">Aun no hay actividad reciente para mostrar en tu panel.</div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+{% if is_visualizador_user %}
+    <div class="modal-backdrop {% if review_modal_abierto %}open{% endif %}" id="revisar-documento-modal">
+        <div class="modal">
+            <h2>Revisar documento</h2>
+            <p>
+                Acci&oacute;n sobre el documento
+                <strong id="review-document-name">seleccionado</strong>.
+            </p>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="revisar_documento">
+                <input type="hidden" name="documento_id" id="review-document-id" value="{{ request.POST.documento_id }}">
+
+                <div class="field" id="review-ticket-number-field">
+                    <label>Numero de ticket</label>
+                    <input type="text" value="{{ proximo_ticket_numero }}" readonly>
+                </div>
+
+                <div class="field">
+                    <label for="{{ review_form.tipo.id_for_label }}">Tipo</label>
+                    {{ review_form.tipo }}
+                    {% if review_form.tipo.errors %}
+                        <div class="field-errors">{{ review_form.tipo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field" id="review-ticket-title-field">
+                    <label for="{{ review_form.titulo.id_for_label }}">Titulo del ticket</label>
+                    {{ review_form.titulo }}
+                    {% if review_form.titulo.errors %}
+                        <div class="field-errors">{{ review_form.titulo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ review_form.descripcion.id_for_label }}" id="review-description-label">Descripcion del ticket</label>
+                    {{ review_form.descripcion }}
+                    {% if review_form.descripcion.errors %}
+                        <div class="field-errors">{{ review_form.descripcion.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field" id="review-ticket-attachments-field">
+                    <label for="{{ review_form.adjuntos.id_for_label }}">Adjuntos</label>
+                    {{ review_form.adjuntos }}
+                    <div class="selected-files">Puedes adjuntar imagenes o documentos de apoyo.</div>
+                    {% if review_form.adjuntos.errors %}
+                        <div class="field-errors">{{ review_form.adjuntos.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary-button" type="button" data-close-review-modal>Cancelar</button>
+                    <button class="primary-button" type="submit">Guardar revisi&oacute;n</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById("revisar-documento-modal");
+            const openButtons = document.querySelectorAll("[data-open-review-modal]");
+            const closeButton = document.querySelector("[data-close-review-modal]");
+            const documentId = document.getElementById("review-document-id");
+            const documentName = document.getElementById("review-document-name");
+            const typeField = document.getElementById("{{ review_form.tipo.id_for_label }}");
+            const titleField = document.getElementById("review-ticket-title-field");
+            const numberField = document.getElementById("review-ticket-number-field");
+            const attachmentsField = document.getElementById("review-ticket-attachments-field");
+            const descriptionLabel = document.getElementById("review-description-label");
+
+            if (!modal || !closeButton || !documentId || !documentName || !openButtons.length) {
+                return;
+            }
+
+            const syncType = () => {
+                if (!typeField || !titleField || !numberField || !attachmentsField || !descriptionLabel) {
+                    return;
+                }
+                const isTicket = typeField.value === "ticket";
+                titleField.style.display = isTicket ? "block" : "none";
+                numberField.style.display = isTicket ? "block" : "none";
+                attachmentsField.style.display = isTicket ? "block" : "none";
+                descriptionLabel.textContent = isTicket ? "Descripcion del ticket" : "Comentario de revision";
+            };
+
+            const closeModal = () => modal.classList.remove("open");
+
+            openButtons.forEach((button) => {
+                button.addEventListener("click", () => {
+                    documentId.value = button.getAttribute("data-document-id");
+                    documentName.textContent = button.getAttribute("data-document-name");
+                    syncType();
+                    modal.classList.add("open");
+                });
+            });
+
+            if (typeField) {
+                typeField.addEventListener("change", syncType);
+                syncType();
+            }
+
+            closeButton.addEventListener("click", closeModal);
+            modal.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+{% endif %}
+{% endblock %}

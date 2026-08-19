@@ -1,0 +1,65 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}Tickets | Gestor de Documentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Tickets</h1>
+        <p class="page-subtitle">Da seguimiento a incidencias ligadas a documentos y manten claro que esta pendiente, en revision o ya resuelto.</p>
+    </div>
+
+    <a class="secondary-button" href="{% url 'documentacion' %}">Volver a documentaci&oacute;n</a>
+</div>
+
+<div class="workspace-shell">
+    <div class="filter-row">
+        <a class="filter-chip {% if estado == 'activos' %}active{% endif %}" href="{% url 'tickets' %}?estado=activos">Activos</a>
+        <a class="filter-chip {% if estado == 'revision' %}active{% endif %}" href="{% url 'tickets' %}?estado=revision">En revisi&oacute;n</a>
+        <a class="filter-chip {% if estado == 'cerrado' %}active{% endif %}" href="{% url 'tickets' %}?estado=cerrado">Cerrados</a>
+        <a class="filter-chip {% if estado == 'todos' %}active{% endif %}" href="{% url 'tickets' %}?estado=todos">Todos</a>
+    </div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket</th>
+                    <th>Documento</th>
+                    <th>Proyecto</th>
+                    <th>Solicit&oacute;</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                    <tr>
+                        <td>
+                            <strong>{{ ticket.numero_ticket }}</strong><br>
+                            <span class="document-action">{{ ticket.titulo }}</span>
+                        </td>
+                        <td>{{ ticket.documento.nombre }}</td>
+                        <td>{{ ticket.proyecto.nombre }}</td>
+                        <td>
+                            {{ ticket.created_by.username|default:"Sistema" }}<br>
+                            <span class="document-action">{{ ticket.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                        </td>
+                        <td>
+                            <span class="ticket-badge {{ ticket.estado }}">{{ ticket.get_estado_display }}</span><br>
+                            <span class="ticket-pending {{ ticket.pending_class }}">{{ ticket.pending_label }}</span>
+                        </td>
+                        <td class="table-actions">
+                            <a class="document-link emphasis" href="{% url 'ticket_detalle' ticket.id %}">Ver ticket</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-state">No hay tickets para este filtro.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}Crear usuarios | Gestor de Documentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Crear usuarios</h1>
+        <p class="page-subtitle">Crea, filtra, edita y elimina accesos para gestores y visualizadores.</p>
+    </div>
+
+    <button class="primary-button" type="button" data-open-create-user>Crear usuario</button>
+</div>
+
+<div class="workspace-shell">
+    <div class="filter-row">
+        <a class="filter-chip {% if role_filter == 'todos' %}active{% endif %}" href="{% url 'crear_usuarios' %}?rol=todos">Todos</a>
+        <a class="filter-chip {% if role_filter == 'gestor' %}active{% endif %}" href="{% url 'crear_usuarios' %}?rol=gestor">Gestores</a>
+        <a class="filter-chip {% if role_filter == 'visualizador' %}active{% endif %}" href="{% url 'crear_usuarios' %}?rol=visualizador">Visualizadores</a>
+    </div>
+
+    {% if edit_form and edit_user %}
+        <form class="compare-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="editar">
+            <input type="hidden" name="user_id" value="{{ edit_user.id }}">
+            <div class="compare-field">
+                <label for="{{ edit_form.username.id_for_label }}">Usuario</label>
+                {{ edit_form.username }}
+                {% if edit_form.username.errors %}
+                    <div class="field-errors">{{ edit_form.username.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="compare-field">
+                <label for="{{ edit_form.first_name.id_for_label }}">Nombre</label>
+                {{ edit_form.first_name }}
+                {% if edit_form.first_name.errors %}
+                    <div class="field-errors">{{ edit_form.first_name.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="compare-field">
+                <label for="{{ edit_form.last_name.id_for_label }}">Apellidos</label>
+                {{ edit_form.last_name }}
+                {% if edit_form.last_name.errors %}
+                    <div class="field-errors">{{ edit_form.last_name.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="compare-field">
+                <label for="{{ edit_form.password.id_for_label }}">Nueva contrasena</label>
+                {{ edit_form.password }}
+                {% if edit_form.password.errors %}
+                    <div class="field-errors">{{ edit_form.password.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="compare-field">
+                <label for="{{ edit_form.role.id_for_label }}">Rol</label>
+                {{ edit_form.role }}
+                {% if edit_form.role.errors %}
+                    <div class="field-errors">{{ edit_form.role.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="document-actions">
+                <button class="primary-button" type="submit">Guardar cambios</button>
+                <a class="secondary-button" href="{% url 'crear_usuarios' %}?rol={{ role_filter }}">Cancelar</a>
+            </div>
+        </form>
+    {% endif %}
+
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Rol</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{ usuario.username }}</td>
+                        <td>{{ usuario.first_name }} {{ usuario.last_name }}</td>
+                        <td>
+                            {% if usuario.groups.all %}
+                                {% for group in usuario.groups.all %}
+                                    <span class="role-badge {% if group.name == 'Gestor' %}gestor{% else %}visualizador{% endif %}">{{ group.name }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="role-badge visualizador">Sin rol</span>
+                            {% endif %}
+                        </td>
+                        <td class="table-actions">
+                            <div class="document-actions">
+                                <a class="document-link emphasis" href="{% url 'crear_usuarios' %}?rol={{ role_filter }}&editar={{ usuario.id }}">Editar</a>
+                                <form method="post" onsubmit="return confirm('Vas a eliminar al usuario {{ usuario.username }}. Deseas continuar?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="eliminar">
+                                    <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                    <button class="document-link document-delete" type="submit">Eliminar</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="empty-state">Aun no hay usuarios para este filtro.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal-backdrop {% if form.errors %}open{% endif %}" id="crear-usuario-modal">
+    <div class="modal">
+        <h2>Nuevo usuario</h2>
+        <p>Captura los datos del usuario y asigna el rol con el que trabajara dentro del sistema.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="crear">
+
+            <div class="field">
+                <label for="{{ form.username.id_for_label }}">Usuario</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="field-errors">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.first_name.id_for_label }}">Nombre</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <div class="field-errors">{{ form.first_name.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.last_name.id_for_label }}">Apellidos</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                    <div class="field-errors">{{ form.last_name.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.password.id_for_label }}">Contrasena</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div class="field-errors">{{ form.password.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.role.id_for_label }}">Rol</label>
+                {{ form.role }}
+                {% if form.role.errors %}
+                    <div class="field-errors">{{ form.role.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="modal-actions">
+                <button class="secondary-button" type="button" data-close-create-user>Cancelar</button>
+                <button class="primary-button" type="submit">Crear usuario</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById("crear-usuario-modal");
+        const openButton = document.querySelector("[data-open-create-user]");
+        const closeButton = document.querySelector("[data-close-create-user]");
+
+        if (!modal || !openButton || !closeButton) {
+            return;
+        }
+
+        const openModal = () => modal.classList.add("open");
+        const closeModal = () => modal.classList.remove("open");
+
+        openButton.addEventListener("click", openModal);
+        closeButton.addEventListener("click", closeModal);
+        modal.addEventListener("click", (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    })();
+</script>
+{% endblock %}

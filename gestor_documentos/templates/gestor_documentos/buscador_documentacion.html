@@ -1,0 +1,259 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}Buscador de Documentacion{% endblock %}
+
+{% block content %}
+<style>
+    .search-shell {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .search-hero {
+        display: grid;
+        gap: 0.9rem;
+        padding: 1.8rem;
+        border-radius: 28px;
+        background:
+            radial-gradient(circle at top right, rgba(20, 83, 45, 0.18), transparent 34%),
+            linear-gradient(145deg, #f8faf7, #eef6ef);
+        border: 1px solid rgba(20, 83, 45, 0.1);
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+    }
+
+    .search-hero h1 {
+        margin: 0;
+        font-size: 2rem;
+    }
+
+    .search-hero p {
+        margin: 0;
+        max-width: 54rem;
+        color: #486057;
+        line-height: 1.6;
+    }
+
+    .search-form-card {
+        display: grid;
+        gap: 0.85rem;
+        padding: 1rem;
+        border-radius: 24px;
+        background: #ffffff;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .search-form-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.85rem;
+        align-items: center;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 1rem 1.15rem;
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: #f8fafc;
+        font-size: 1rem;
+        color: #12221d;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: rgba(22, 101, 52, 0.45);
+        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.13);
+        background: #ffffff;
+    }
+
+    .search-hint {
+        margin: 0;
+        color: #5f746b;
+        font-size: 0.93rem;
+    }
+
+    .search-results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .search-results-header h2,
+    .search-results-header p {
+        margin: 0;
+    }
+
+    .search-meta {
+        color: #5f746b;
+        font-size: 0.95rem;
+    }
+
+    .search-results-list {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .search-result-card {
+        display: grid;
+        gap: 0.8rem;
+        padding: 1.25rem 1.3rem;
+        border-radius: 24px;
+        background: #ffffff;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+    }
+
+    .search-result-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .search-result-title {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .search-result-path {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        background: #edf7ee;
+        color: #1f5131;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .search-result-snippet {
+        margin: 0;
+        color: #31423b;
+        line-height: 1.65;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .search-result-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        color: #60746b;
+        font-size: 0.92rem;
+    }
+
+    .search-result-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .search-empty {
+        padding: 2rem 1.4rem;
+        border-radius: 24px;
+        background: #ffffff;
+        border: 1px dashed rgba(148, 163, 184, 0.45);
+        text-align: center;
+        color: #54665f;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+    }
+
+    .search-empty strong {
+        display: block;
+        margin-bottom: 0.45rem;
+        color: #13231e;
+    }
+
+    @media (max-width: 760px) {
+        .search-form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .search-results-header,
+        .search-result-top,
+        .search-result-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+
+<section class="search-shell">
+    <div class="search-hero">
+        <h1>Buscador de Documentaci&oacute;n</h1>
+        <p>
+            Busca por nombre del archivo o por cualquier texto dentro de la documentaci&oacute;n convertida a Markdown.
+            El sistema te muestra coincidencias probables y te indica exactamente en qu&eacute; ruta vive cada documento.
+        </p>
+    </div>
+
+    <form class="search-form-card" method="get">
+        <div class="search-form-row">
+            <input
+                class="search-input"
+                type="search"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Ejemplo: metas del proyecto, reglas operativas, recepcion..."
+                autocomplete="off"
+            >
+            <button class="primary-button" type="submit">Buscar</button>
+        </div>
+        <p class="search-hint">
+            Puedes escribir el nombre del documento o cualquier frase que recuerdes del contenido.
+        </p>
+    </form>
+
+    {% if search_query %}
+        <div class="search-results-header">
+            <div>
+                <h2>Resultados</h2>
+                <p class="search-meta">{{ search_total }} coincidencia{{ search_total|pluralize }} para "{{ search_query }}"</p>
+            </div>
+        </div>
+
+        {% if search_results %}
+            <div class="search-results-list">
+                {% for result in search_results %}
+                    <article class="search-result-card">
+                        <div class="search-result-top">
+                            <div>
+                                <h3 class="search-result-title">{{ result.documento.nombre }}</h3>
+                                <div class="search-result-info">
+                                    <span>Proyecto: {{ result.documento.proyecto.nombre }}</span>
+                                    <span>Ruta: {{ result.path_label }}</span>
+                                    {% if result.latest_version %}
+                                        <span>Versi&oacute;n actual: {{ result.latest_version }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="search-result-path">Coincidencia probable</span>
+                        </div>
+
+                        <p class="search-result-snippet">{{ result.snippet }}</p>
+
+                        <div class="search-result-actions">
+                            <a class="secondary-button" href="{{ result.explorer_url }}">Ir a la ruta</a>
+                            <a class="secondary-button" href="{{ result.open_url }}" target="_blank" rel="noopener noreferrer">Abrir archivo</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="search-empty">
+                <strong>No encontramos coincidencias para "{{ search_query }}".</strong>
+                Prueba con otra palabra clave, una frase m&aacute;s corta o el nombre parcial del documento.
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="search-empty">
+            <strong>Empieza escribiendo algo para buscar.</strong>
+            Puedes localizar documentos por nombre o por texto contenido dentro del Markdown m&aacute;s reciente.
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

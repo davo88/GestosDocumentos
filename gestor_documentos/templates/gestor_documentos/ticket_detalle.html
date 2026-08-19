@@ -1,0 +1,155 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}{{ ticket.numero_ticket }} | Tickets{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{{ ticket.numero_ticket }}</h1>
+        <p class="page-subtitle">{{ ticket.titulo }}</p>
+    </div>
+
+    <a class="secondary-button" href="{% url 'tickets' %}">Volver a tickets</a>
+</div>
+
+<div class="workspace-shell">
+    <div class="detail-grid">
+        <div class="detail-card">
+            <h2>Resumen</h2>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <strong>Documento</strong>
+                    <span>{{ ticket.documento.nombre }}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Proyecto</strong>
+                    <span>{{ ticket.proyecto.nombre }}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Estado</strong>
+                    <span class="ticket-badge {{ ticket.estado }}">{{ ticket.get_estado_display }}</span>
+                </div>
+                {% if ticket.reviewed_by %}
+                    <div class="detail-item">
+                        <strong>Ultima respuesta del gestor</strong>
+                        <span>{{ ticket.reviewed_by.username }} el {{ ticket.fecha_revision|date:"d/m/Y H:i" }}</span>
+                    </div>
+                {% endif %}
+                <div class="detail-item">
+                    <strong>Solicit&oacute;</strong>
+                    <span>{{ ticket.created_by.username|default:"Sistema" }} el {{ ticket.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                </div>
+                {% if ticket.closed_by %}
+                    <div class="detail-item">
+                        <strong>Cerrado por</strong>
+                        <span>{{ ticket.closed_by.username }} el {{ ticket.fecha_cierre|date:"d/m/Y H:i" }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <h2>Solicitud original</h2>
+            <div class="ticket-code">{{ ticket.numero_ticket }}</div>
+            <div class="detail-item">
+                <strong>Descripci&oacute;n</strong>
+                <span>{{ ticket.descripcion|linebreaksbr }}</span>
+            </div>
+            <div class="detail-list">
+                <strong>Adjuntos</strong>
+                {% for adjunto in ticket.adjuntos.all %}
+                    <a class="document-link emphasis" href="{{ adjunto.archivo.url }}" target="_blank" rel="noopener noreferrer">{{ adjunto.nombre }}</a>
+                {% empty %}
+                    <span class="document-action">Este ticket no tiene adjuntos.</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <h3>Seguimiento</h3>
+        <div class="ticket-timeline">
+            <div class="ticket-entry">
+                <strong>Ticket levantado</strong>
+                <div>{{ ticket.descripcion|linebreaksbr }}</div>
+                <div class="ticket-entry-meta">
+                    {{ ticket.created_by.username|default:"Sistema" }} | {{ ticket.fecha_creacion|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+
+            {% for comentario in ticket.comentarios.all %}
+                <div class="ticket-entry">
+                    <strong>
+                        {% if comentario.tipo == "respuesta_gestor" %}Respuesta de {{ comentario.created_by.username|default:"Sistema" }}{% endif %}
+                        {% if comentario.tipo == "rechazo_usuario" %}Nueva observacion de {{ comentario.created_by.username|default:"Sistema" }}{% endif %}
+                        {% if comentario.tipo == "aceptacion_usuario" %}Validacion final de {{ comentario.created_by.username|default:"Sistema" }}{% endif %}
+                        {% if comentario.tipo == "mensaje" %}Mensaje de {{ comentario.created_by.username|default:"Sistema" }}{% endif %}
+                    </strong>
+                    <div>{{ comentario.comentario|linebreaksbr }}</div>
+                    <div class="ticket-entry-meta">{{ comentario.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                    {% if comentario.documento_version %}
+                        <a class="ticket-entry-version" href="{% url 'documento_cambios' ticket.proyecto.id ticket.documento.id %}?actual={{ comentario.documento_version.version }}{% if comentario.documento_version.version > 1 %}&base={{ comentario.documento_version.version|add:'-1' }}{% endif %}">
+                            Ver cambios de la versi&oacute;n {{ comentario.documento_version.version }}
+                        </a>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <div class="documents-empty">Aun no hay respuesta sobre este ticket.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if can_manage_tickets and ticket.estado != 'cerrado' %}
+        <div class="detail-card">
+            <h3>Responder ticket</h3>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="resolver_ticket">
+
+                <div class="field">
+                    <label for="{{ resolver_form.comentario.id_for_label }}">Comentarios para el usuario</label>
+                    {{ resolver_form.comentario }}
+                    {% if resolver_form.comentario.errors %}
+                        <div class="field-errors">{{ resolver_form.comentario.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ resolver_form.archivo_version.id_for_label }}">Nueva versi&oacute;n del documento</label>
+                    {{ resolver_form.archivo_version }}
+                    <div class="selected-files">Opcional. Si subes archivo, se aplicar&aacute; la misma conversi&oacute;n y versionado a Git/Markdown.</div>
+                    {% if resolver_form.archivo_version.errors %}
+                        <div class="field-errors">{{ resolver_form.archivo_version.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-actions">
+                    <button class="primary-button" type="submit">Enviar a revisi&oacute;n del usuario</button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+
+    {% if is_ticket_owner and ticket.estado == 'en_revision' %}
+        <div class="detail-card">
+            <h3>Validar respuesta del gestor</h3>
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="field">
+                    <label for="{{ revision_form.comentario.id_for_label }}">Comentarios de validaci&oacute;n</label>
+                    {{ revision_form.comentario }}
+                    {% if revision_form.comentario.errors %}
+                        <div class="field-errors">{{ revision_form.comentario.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary-button" type="submit" name="action" value="regresar_ticket">Regresar con observaciones</button>
+                    <button class="primary-button" type="submit" name="action" value="aceptar_ticket">Aceptar cambio y cerrar</button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
