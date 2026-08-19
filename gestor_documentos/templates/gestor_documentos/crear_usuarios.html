@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">Crear usuarios</h1>
-        <p class="page-subtitle">Crea, filtra, edita y elimina accesos para gestores y visualizadores.</p>
+        <p class="page-subtitle">Crea, filtra, edita y elimina accesos para gestores, visualizadores, WBS y WBS_Desarrollo.</p>
     </div>
 
     <button class="primary-button" type="button" data-open-create-user>Crear usuario</button>
@@ -17,6 +17,8 @@
         <a class="filter-chip {% if role_filter == 'todos' %}active{% endif %}" href="{% url 'crear_usuarios' %}?rol=todos">Todos</a>
         <a class="filter-chip {% if role_filter == 'gestor' %}active{% endif %}" href="{% url 'crear_usuarios' %}?rol=gestor">Gestores</a>
         <a class="filter-chip {% if role_filter == 'visualizador' %}active{% endif %}" href="{% url 'crear_usuarios' %}?rol=visualizador">Visualizadores</a>
+        <a class="filter-chip {% if role_filter == 'wbs' %}active{% endif %}" href="{% url 'crear_usuarios' %}?rol=wbs">WBS</a>
+        <a class="filter-chip {% if role_filter == 'wbs_desarrollo' %}active{% endif %}" href="{% url 'crear_usuarios' %}?rol=wbs_desarrollo">WBS_Desarrollo</a>
     </div>
 
     {% if edit_form and edit_user %}
@@ -53,10 +55,10 @@
                 {% endif %}
             </div>
             <div class="compare-field">
-                <label for="{{ edit_form.role.id_for_label }}">Rol</label>
-                {{ edit_form.role }}
-                {% if edit_form.role.errors %}
-                    <div class="field-errors">{{ edit_form.role.errors }}</div>
+                <label>Roles</label>
+                {{ edit_form.roles }}
+                {% if edit_form.roles.errors %}
+                    <div class="field-errors">{{ edit_form.roles.errors }}</div>
                 {% endif %}
             </div>
             <div class="document-actions">
@@ -72,7 +74,7 @@
                 <tr>
                     <th>Usuario</th>
                     <th>Nombre</th>
-                    <th>Rol</th>
+                    <th>Roles</th>
                     <th></th>
                 </tr>
             </thead>
@@ -84,7 +86,7 @@
                         <td>
                             {% if usuario.groups.all %}
                                 {% for group in usuario.groups.all %}
-                                    <span class="role-badge {% if group.name == 'Gestor' %}gestor{% else %}visualizador{% endif %}">{{ group.name }}</span>
+                                    <span class="role-badge {% if group.name == 'Gestor' %}gestor{% elif group.name == 'WBS' %}wbs{% elif group.name == 'WBS_Desarrollo' %}wbs-desarrollo{% else %}visualizador{% endif %}">{{ group.name }}</span>
                                 {% endfor %}
                             {% else %}
                                 <span class="role-badge visualizador">Sin rol</span>
@@ -115,7 +117,7 @@
 <div class="modal-backdrop {% if form.errors %}open{% endif %}" id="crear-usuario-modal">
     <div class="modal">
         <h2>Nuevo usuario</h2>
-        <p>Captura los datos del usuario y asigna el rol con el que trabajara dentro del sistema.</p>
+        <p>Captura los datos del usuario y asigna uno o varios roles con los que trabajara dentro del sistema.</p>
 
         <form method="post">
             {% csrf_token %}
@@ -154,10 +156,10 @@
             </div>
 
             <div class="field">
-                <label for="{{ form.role.id_for_label }}">Rol</label>
-                {{ form.role }}
-                {% if form.role.errors %}
-                    <div class="field-errors">{{ form.role.errors }}</div>
+                <label>Roles</label>
+                {{ form.roles }}
+                {% if form.roles.errors %}
+                    <div class="field-errors">{{ form.roles.errors }}</div>
                 {% endif %}
             </div>
 

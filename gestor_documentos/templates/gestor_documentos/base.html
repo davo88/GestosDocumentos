@@ -551,9 +551,1125 @@
             color: #57606a;
         }
 
+        .role-badge.wbs {
+            background: #fff1d6;
+            color: #9a6700;
+        }
+
+        .role-badge.wbs-desarrollo {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
         .workspace-shell {
             display: grid;
             gap: 22px;
+        }
+
+        .board-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding: 18px 20px;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: linear-gradient(180deg, #fff 0%, #f7f1e6 100%);
+        }
+
+        .board-toolbar-copy {
+            display: grid;
+            gap: 6px;
+        }
+
+        .board-toolbar-copy strong {
+            font-size: 1.1rem;
+        }
+
+        .board-toolbar-copy span {
+            color: var(--muted);
+        }
+
+        .board-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .board-scroll {
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .board-grid {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(300px, 340px);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .board-column {
+            display: grid;
+            gap: 14px;
+            min-height: 420px;
+            padding: 16px;
+            border: 1px solid #d9cfbf;
+            border-radius: 24px;
+            background: linear-gradient(180deg, #fffefb 0%, #f6efe3 100%);
+        }
+
+        .board-column.dragover {
+            border-color: #95b4ff;
+            box-shadow: inset 0 0 0 2px rgba(29, 78, 216, 0.12);
+            background: linear-gradient(180deg, #fcfdff 0%, #edf4ff 100%);
+        }
+
+        .board-column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .board-column-title {
+            display: grid;
+            gap: 4px;
+        }
+
+        .board-column-title h2 {
+            margin: 0;
+            font-size: 1.04rem;
+        }
+
+        .board-column-title span {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .board-card-list {
+            display: grid;
+            gap: 12px;
+            min-height: 120px;
+        }
+
+        .board-card {
+            display: grid;
+            gap: 12px;
+            padding: 16px;
+            border: 1px solid #e2d8c8;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 10px 22px rgba(31, 41, 51, 0.05);
+            cursor: grab;
+        }
+
+        .board-card.dragging {
+            opacity: 0.55;
+            transform: rotate(1deg);
+        }
+
+        .board-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .board-card h3 {
+            margin: 0;
+            font-size: 0.98rem;
+        }
+
+        .board-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .board-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .board-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .board-pill.baja {
+            background: #e8f7ea;
+            color: #1f7a35;
+        }
+
+        .board-pill.media {
+            background: #fff3cd;
+            color: #8a6200;
+        }
+
+        .board-pill.alta {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .board-pill.assignee {
+            background: #edf1fb;
+            color: #2444a8;
+        }
+
+        .board-card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .board-link {
+            text-decoration: none;
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .board-muted-link {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .board-empty {
+            padding: 18px;
+            border: 1px dashed #d5c8b7;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.68);
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .board-panel-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 22px;
+            align-items: start;
+        }
+
+        .board-sidepanel {
+            position: sticky;
+            top: 20px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .board-sidecard {
+            display: grid;
+            gap: 14px;
+            padding: 20px;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: #fff;
+        }
+
+        .board-sidecard h2,
+        .board-sidecard h3 {
+            margin: 0;
+        }
+
+        .board-sidecard p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .board-meta-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .board-meta-item {
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: #faf6ef;
+        }
+
+        .board-meta-grid.compact {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .board-meta-item.compact {
+            display: grid;
+            gap: 4px;
+            min-height: 72px;
+            align-content: start;
+            background: linear-gradient(180deg, #fff 0%, #f8f2e8 100%);
+            border: 1px solid #eadfce;
+        }
+
+        .board-meta-label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .board-meta-value {
+            color: var(--ink);
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .board-card-title-wrap {
+            display: grid;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .board-modal-close {
+            width: 38px;
+            height: 38px;
+            display: inline-grid;
+            place-items: center;
+            border: 0;
+            border-radius: 999px;
+            background: #f3efe7;
+            color: #516072;
+            font-size: 1.2rem;
+            font-weight: 800;
+            line-height: 1;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .board-modal-close:hover {
+            background: #e7e0d3;
+            color: #243447;
+        }
+
+        .wbs-detail-modal {
+            display: grid;
+            gap: 0;
+        }
+
+        .wbs-detail-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 4px 4px 24px;
+            border-bottom: 1px solid #e6ebf2;
+        }
+
+        .wbs-detail-header-main {
+            display: grid;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .wbs-detail-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .wbs-detail-title-row h2 {
+            margin: 0;
+            font-size: 2rem;
+            line-height: 1.1;
+        }
+
+        .wbs-detail-header p {
+            margin: 0;
+            color: #6b778c;
+            font-size: 1rem;
+        }
+
+        .wbs-detail-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            align-items: start;
+        }
+
+        .wbs-detail-main {
+            display: grid;
+            gap: 28px;
+            padding: 28px 28px 0 0;
+        }
+
+        .wbs-detail-sidebar {
+            display: grid;
+            gap: 18px;
+            padding: 28px 0 0 28px;
+            border-left: 1px solid #e6ebf2;
+        }
+
+        .wbs-detail-section {
+            display: grid;
+            gap: 14px;
+        }
+
+        .wbs-detail-section h3,
+        .wbs-detail-sidecard h3 {
+            margin: 0;
+            color: #172b4d;
+            font-size: 1.12rem;
+        }
+
+        .wbs-detail-section-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .wbs-detail-counter {
+            color: #8a94a6;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .wbs-detail-description {
+            padding: 18px 20px;
+            border: 1px solid #dce3ee;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fbfcff 0%, #f4f7fc 100%);
+            color: #44546f;
+            line-height: 1.7;
+        }
+
+        .wbs-description-form {
+            display: grid;
+            gap: 12px;
+        }
+
+        .wbs-detail-description-editor {
+            padding: 18px 20px;
+            border: 1px solid #dce3ee;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fbfcff 0%, #f4f7fc 100%);
+        }
+
+        .wbs-detail-description-editor textarea {
+            min-height: 150px;
+            border: 0;
+            padding: 0;
+            resize: vertical;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        .wbs-detail-description-editor textarea:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .wbs-description-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .wbs-subtask-form {
+            display: grid;
+            gap: 10px;
+        }
+
+        .wbs-subtask-form-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+        }
+
+        .wbs-subtask-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .wbs-subtask-item {
+            display: grid;
+            grid-template-columns: 28px minmax(0, 1fr);
+            gap: 12px;
+            align-items: center;
+            padding: 12px 14px;
+            border: 1px solid #dce3ee;
+            border-radius: 16px;
+            background: #fff;
+        }
+
+        .wbs-subtask-item.done {
+            background: #f7fbf7;
+            border-color: #cfe7d4;
+        }
+
+        .wbs-subtask-check {
+            width: 28px;
+            height: 28px;
+            display: inline-grid;
+            place-items: center;
+            border: 2px solid #c2ccdc;
+            border-radius: 999px;
+            background: #fff;
+            color: #1d7a35;
+            font-size: 0.95rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .wbs-subtask-item.done .wbs-subtask-check {
+            border-color: #64b67c;
+            background: #e7f6eb;
+        }
+
+        .wbs-subtask-copy strong {
+            color: #172b4d;
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+
+        .wbs-subtask-item.done .wbs-subtask-copy strong {
+            color: #738198;
+            text-decoration: line-through;
+        }
+
+        .wbs-comment-composer {
+            display: grid;
+            grid-template-columns: 40px minmax(0, 1fr);
+            gap: 14px;
+            align-items: start;
+        }
+
+        .wbs-comment-composer-avatar,
+        .wbs-comment-avatar {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #dce9ff 0%, #c7d8ff 100%);
+            color: #2450d5;
+            font-size: 0.9rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .wbs-comment-composer-body {
+            display: grid;
+            gap: 10px;
+            padding: 14px;
+            border: 1px solid #d6deeb;
+            border-radius: 18px;
+            background: #fff;
+        }
+
+        .wbs-comment-composer-body textarea {
+            min-height: 110px;
+            border: 0;
+            padding: 0;
+            resize: vertical;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        .wbs-comment-composer-body textarea:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .wbs-comment-composer-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #e6ebf2;
+            flex-wrap: wrap;
+        }
+
+        .wbs-comment-composer-hint {
+            color: #6b778c;
+            font-size: 0.9rem;
+        }
+
+        .board-comment-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .wbs-comment-item {
+            display: grid;
+            grid-template-columns: 40px minmax(0, 1fr);
+            gap: 14px;
+            align-items: start;
+        }
+
+        .wbs-comment-content {
+            display: grid;
+            gap: 8px;
+        }
+
+        .wbs-comment-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .wbs-comment-meta strong {
+            color: #172b4d;
+        }
+
+        .wbs-comment-meta span {
+            color: #8a94a6;
+            font-size: 0.85rem;
+        }
+
+        .wbs-comment-content p {
+            margin: 0;
+            color: #44546f;
+            line-height: 1.6;
+        }
+
+        .wbs-detail-sidecard {
+            display: grid;
+            gap: 16px;
+        }
+
+        .wbs-detail-sidecard-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .wbs-dependency-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .wbs-dependency-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .wbs-dependency-chip.blocked {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .wbs-dependency-chip.done {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .wbs-detail-mini-action {
+            color: #2450d5;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .wbs-detail-facts {
+            display: grid;
+            gap: 0;
+            border-top: 1px solid #e6ebf2;
+        }
+
+        .wbs-detail-fact {
+            display: grid;
+            gap: 8px;
+            padding: 16px 0;
+            border-bottom: 1px solid #e6ebf2;
+        }
+
+        .wbs-detail-fact span {
+            color: #8a94a6;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .wbs-detail-fact strong {
+            color: #172b4d;
+            font-size: 1rem;
+        }
+
+        .wbs-file-upload-form {
+            display: grid;
+            gap: 10px;
+        }
+
+        .wbs-file-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .wbs-file-item {
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr);
+            gap: 12px;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #dce3ee;
+            border-radius: 16px;
+            background: #fff;
+            text-decoration: none;
+        }
+
+        .wbs-file-item:hover {
+            border-color: #bfd0f5;
+            box-shadow: 0 8px 20px rgba(36, 80, 213, 0.08);
+        }
+
+        .wbs-file-icon {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #eef3ff 0%, #dfe9ff 100%);
+            color: #2450d5;
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .wbs-file-copy {
+            min-width: 0;
+            display: grid;
+            gap: 4px;
+        }
+
+        .wbs-file-copy strong,
+        .wbs-file-copy span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .wbs-file-copy strong {
+            color: #172b4d;
+            font-size: 0.92rem;
+        }
+
+        .wbs-file-copy span {
+            color: #8a94a6;
+            font-size: 0.82rem;
+        }
+
+        .wbs-detail-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding: 18px 0 0;
+            margin-top: 22px;
+            border-top: 1px solid #e6ebf2;
+        }
+
+        .wbs-alert-modal {
+            width: min(100%, 560px);
+        }
+
+        .wbs-alert-modal-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .board-comment {
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: #fffdf9;
+        }
+
+        .board-comment strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .board-comment span {
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .board-comment p {
+            margin: 8px 0 0;
+            color: var(--ink);
+        }
+
+        .project-canvas {
+            display: grid;
+            gap: 22px;
+        }
+
+        .project-board-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .project-board-card {
+            display: grid;
+            gap: 14px;
+            padding: 22px;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: linear-gradient(180deg, #fff 0%, #f7f1e7 100%);
+        }
+
+        .project-board-card h2 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .project-board-card p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .project-board-meta {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .project-board-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .trello-shell {
+            display: grid;
+            gap: 18px;
+        }
+
+        .trello-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 20px 22px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 26px;
+            background: linear-gradient(120deg, #2450d5 0%, #1f7ae0 55%, #58b4ff 100%);
+            color: #fff;
+        }
+
+        .trello-header h1 {
+            margin: 0 0 6px;
+        }
+
+        .trello-header p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.84);
+            max-width: 760px;
+        }
+
+        .trello-board-wrap {
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .trello-board {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 320px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .trello-list {
+            display: grid;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 20px;
+            background: #ebecf0;
+            min-height: 220px;
+            box-shadow: inset 0 1px 0 rgba(9, 30, 66, 0.08);
+        }
+
+        .trello-list.dragover {
+            background: #dfe7f7;
+            outline: 2px dashed #4c7ff0;
+        }
+
+        .trello-list-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .trello-list-header h2 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .trello-list-subtitle {
+            color: #5f6b7a;
+            font-size: 0.82rem;
+        }
+
+        .trello-card-stack {
+            display: grid;
+            gap: 10px;
+            min-height: 44px;
+        }
+
+        .trello-card {
+            display: grid;
+            gap: 12px;
+            padding: 14px 14px 14px 16px;
+            border-radius: 16px;
+            background: #fff;
+            border: 1px solid rgba(9, 30, 66, 0.08);
+            border-left: 3px solid #ff5f57;
+            box-shadow: 0 10px 22px rgba(9, 30, 66, 0.08);
+            cursor: grab;
+        }
+
+        .trello-card.dragging {
+            opacity: 0.5;
+            transform: rotate(1deg);
+        }
+
+        .trello-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .trello-card-code {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: #e6edff;
+            color: #2450d5;
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .trello-card-more {
+            color: #8b95a7;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            user-select: none;
+        }
+
+        .trello-card h3 {
+            margin: 0;
+            font-size: 1.02rem;
+            line-height: 1.4;
+        }
+
+        .trello-card p {
+            margin: 0;
+            color: #5f6b7a;
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .trello-card-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .trello-dependency-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #fee2e2;
+            color: #b91c1c;
+            font-size: 0.76rem;
+            font-weight: 800;
+            gap: 4px;
+            border: 1px solid #fca5a5;
+        }
+
+        .trello-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e8ebf2;
+        }
+
+        .trello-card-stats {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            color: #7d889c;
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+
+        .trello-card-stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trello-avatar {
+            width: 34px;
+            height: 34px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #d6e4ff 0%, #bdd0ff 100%);
+            color: #2450d5;
+            font-size: 0.84rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .trello-assignee {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #44546f;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .wbs-image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .wbs-image-card {
+            display: grid;
+            gap: 8px;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: #fffdf9;
+        }
+
+        .wbs-image-card img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 12px;
+            background: #eef2f8;
+        }
+
+        .wbs-image-card span {
+            color: var(--muted);
+            font-size: 0.8rem;
+            word-break: break-word;
+        }
+
+        .trello-link {
+            color: #0c66e4;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.88rem;
+        }
+
+        .trello-subtle-link {
+            color: #44546f;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.86rem;
+        }
+
+        .trello-add-card,
+        .trello-add-list {
+            border: 0;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font: inherit;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .trello-add-card {
+            color: #44546f;
+            background: transparent;
+        }
+
+        .trello-add-card:hover {
+            background: rgba(9, 30, 66, 0.08);
+        }
+
+        .trello-add-list {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(4px);
+            min-height: 48px;
+        }
+
+        .trello-add-list:hover {
+            background: rgba(255, 255, 255, 0.24);
+        }
+
+        .trello-composer,
+        .trello-list-composer {
+            display: grid;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 16px;
+            background: #f7f8fb;
+        }
+
+        .trello-composer textarea,
+        .trello-composer input,
+        .trello-composer select,
+        .trello-list-composer input,
+        .trello-list-composer textarea {
+            width: 100%;
+            border: 1px solid #c7d1df;
+            border-radius: 12px;
+            padding: 12px 13px;
+            font: inherit;
+            background: #fff;
+        }
+
+        .trello-composer-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .trello-side-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 22px;
+            align-items: start;
+        }
+
+        .trello-side-layout.trello-side-layout-full {
+            grid-template-columns: minmax(0, 1fr);
         }
 
         .workspace-toolbar {
@@ -1071,6 +2187,28 @@
             background: #fff;
         }
 
+        .compare-field ul,
+        .field ul {
+            list-style: none;
+            margin: 0;
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fff;
+            display: grid;
+            gap: 10px;
+        }
+
+        .compare-field ul li label,
+        .field ul li label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
         .diff-summary {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1243,10 +2381,16 @@
 
         .modal {
             width: min(100%, 460px);
+            max-height: min(88vh, 900px);
+            overflow-y: auto;
             border-radius: 24px;
             background: var(--surface);
             padding: 28px;
             box-shadow: 0 24px 60px rgba(20, 28, 38, 0.22);
+        }
+
+        .modal.modal-wide {
+            width: min(100%, 1080px);
         }
 
         .modal h2 {
@@ -1256,6 +2400,42 @@
         .modal p {
             margin: 0 0 22px;
             color: var(--muted);
+        }
+
+        @media (max-width: 920px) {
+            .wbs-detail-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .wbs-detail-main {
+                padding-right: 0;
+            }
+
+            .wbs-detail-sidebar {
+                padding: 16px 0 0;
+                border-left: 0;
+                border-top: 1px solid #e6ebf2;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .wbs-detail-header {
+                padding-bottom: 18px;
+            }
+
+            .wbs-detail-title-row h2 {
+                font-size: 1.5rem;
+            }
+
+            .wbs-comment-composer,
+            .wbs-comment-item {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .wbs-comment-composer-avatar,
+            .wbs-comment-avatar {
+                display: none;
+            }
         }
 
         .field {
@@ -1334,11 +2514,31 @@
                 grid-template-columns: 1fr;
             }
 
+            .board-panel-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .board-sidepanel {
+                position: static;
+            }
+
             .documents-header,
             .documents-tools,
             .document-actions {
                 flex-direction: column;
                 align-items: stretch;
+            }
+
+            .board-grid {
+                grid-auto-columns: minmax(280px, 92vw);
+            }
+
+            .trello-side-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .trello-board {
+                grid-auto-columns: minmax(280px, 92vw);
             }
 
             .document-row,
@@ -1377,6 +2577,9 @@
                     <a class="nav-link {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}" href="{% url 'inicio' %}"><i class="fa-solid fa-house"></i><span>Inicio</span></a>
                     <a class="nav-link {% if request.resolver_match.url_name == 'documentacion' or request.resolver_match.url_name == 'documentacion_proyecto' or request.resolver_match.url_name == 'documento_cambios' or request.resolver_match.url_name == 'documento_visualizador' %}active{% endif %}" href="{% url 'documentacion' %}"><i class="fa-solid fa-folder-tree"></i><span>Documentaci&oacute;n</span></a>
                     <a class="nav-link {% if request.resolver_match.url_name == 'buscador_documentacion' %}active{% endif %}" href="{% url 'buscador_documentacion' %}"><i class="fa-solid fa-magnifying-glass"></i><span>Buscador de Documentaci&oacute;n</span></a>
+                    {% if can_view_wbs_board %}
+                        <a class="nav-link {% if request.resolver_match.url_name == 'wbs_project_list' or request.resolver_match.url_name == 'wbs_board' %}active{% endif %}" href="{% url 'wbs_project_list' %}"><i class="fa-solid fa-table-columns"></i><span>Tablero WBS</span></a>
+                    {% endif %}
                     {% if request.user.is_authenticated %}
                         <a class="nav-link {% if request.resolver_match.url_name == 'tickets' or request.resolver_match.url_name == 'ticket_detalle' %}active{% endif %}" href="{% url 'tickets' %}"><i class="fa-solid fa-ticket"></i><span>Tickets</span></a>
                     {% endif %}

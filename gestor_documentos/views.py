@@ -5,7 +5,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Max, Prefetch, Q
+from django.db import models
+from django.db.models import Count, Max, Prefetch, Q
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -30,6 +31,13 @@ from .forms import (
     TicketCreateForm,
     TicketRevisionUsuarioForm,
     TicketResolverForm,
+    WbsAdjuntoImagenForm,
+    WbsComentarioForm,
+    WbsDescripcionTareaForm,
+    WbsEtapaForm,
+    WbsProyectoForm,
+    WbsSubtareaForm,
+    WbsTareaForm,
 )
 from .github_service import GitHubSyncError, delete_text_file, ensure_directory, upsert_text_file
 from .models import (
@@ -43,22 +51,37 @@ from .models import (
     SistemaConfiguracion,
     Ticket,
     TicketAdjunto,
+    WbsAdjuntoImagen,
+    WbsDependencia,
     TicketComentario,
+    WbsComentario,
+    WbsEtapa,
+    WbsProyecto,
+    WbsSubtarea,
+    WbsTarea,
 )
 from .permissions import (
+    can_comment_wbs_tasks,
     can_create_tickets,
     can_manage_documentacion,
     can_manage_tickets,
+    can_manage_wbs_board,
     can_view_tickets,
+    can_view_wbs_board,
+    can_move_wbs_tasks,
     ensure_role_groups,
     forbid_if_no_view_access,
     is_admin,
     is_visualizador,
+    is_wbs,
+    is_wbs_desarrollo,
 )
 
 
 def landing(request):
     if request.user.is_authenticated:
+        if can_view_wbs_board(request.user) and not _can_access_standard_dashboard(request.user):
+            return redirect("wbs_project_list")
         return redirect("inicio")
     return redirect("login")
 
@@ -66,6 +89,8 @@ def landing(request):
 @login_required
 def inicio(request):
     ensure_role_groups()
+    if can_view_wbs_board(request.user) and not _can_access_standard_dashboard(request.user):
+        return redirect("wbs_project_list")
     denied = forbid_if_no_view_access(request.user)
     if denied:
         return denied
@@ -566,16 +591,22 @@ def crear_usuarios(request):
     edit_user_id = request.GET.get("editar")
 
     form = CrearUsuarioForm()
-    usuarios = User.objects.filter(is_superuser=False).prefetch_related("groups").order_by("username")
+    usuarios_base = User.objects.filter(is_superuser=False).prefetch_related("groups")
+    usuarios = usuarios_base.order_by("username")
     if role_filter == "gestor":
         usuarios = usuarios.filter(groups__name="Gestor")
     elif role_filter == "visualizador":
         usuarios = usuarios.filter(groups__name="Visualizador")
+    elif role_filter == "wbs":
+        usuarios = usuarios.filter(groups__name="WBS")
+    elif role_filter == "wbs_desarrollo":
+        usuarios = usuarios.filter(groups__name="WBS_Desarrollo")
+    usuarios = usuarios.distinct()
 
     edit_user = None
     edit_form = None
     if edit_user_id and str(edit_user_id).isdigit():
-        edit_user = usuarios.filter(pk=int(edit_user_id)).first()
+        edit_user = usuarios_base.filter(pk=int(edit_user_id)).first()
         if edit_user:
             edit_form = EditarUsuarioForm(user_instance=edit_user)
 
@@ -614,6 +645,425 @@ def crear_usuarios(request):
         "role_filter": role_filter,
     }
     return render(request, "gestor_documentos/crear_usuarios.html", context)
+
+
+@login_required
+def wbs_project_list(request):
+    ensure_role_groups()
+    if not can_view_wbs_board(request.user):
+        return redirect("inicio")
+
+    form = WbsProyectoForm(prefix="project")
+    edit_project = None
+    edit_project_form = None
+
+    edit_project_id = request.GET.get("editar")
+    if edit_project_id and str(edit_project_id).isdigit():
+        edit_project = WbsProyecto.objects.filter(pk=int(edit_project_id)).first()
+        if edit_project and can_manage_wbs_board(request.user):
+            edit_project_form = WbsProyectoForm(instance=edit_project, prefix="edit-project")
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "crear_proyecto":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para crear proyectos WBS.")
+                return redirect("wbs_project_list")
+            form = WbsProyectoForm(request.POST, prefix="project")
+            if form.is_valid():
+                proyecto = form.save(commit=False)
+                proyecto.created_by = request.user
+                proyecto.updated_by = request.user
+                proyecto.save()
+                messages.success(request, f"El proyecto WBS {proyecto.nombre} se creo correctamente.")
+                return redirect("wbs_board", project_id=proyecto.id)
+
+        if action == "editar_proyecto":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para editar proyectos WBS.")
+                return redirect("wbs_project_list")
+            project_id = request.POST.get("project_id")
+            edit_project = get_object_or_404(WbsProyecto, pk=project_id)
+            edit_project_form = WbsProyectoForm(request.POST, instance=edit_project, prefix="edit-project")
+            if edit_project_form.is_valid():
+                proyecto = edit_project_form.save(commit=False)
+                proyecto.updated_by = request.user
+                proyecto.save()
+                messages.success(request, f"El proyecto WBS {proyecto.nombre} se actualizo correctamente.")
+                return redirect("wbs_project_list")
+
+        if action == "eliminar_proyecto":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para eliminar proyectos WBS.")
+                return redirect("wbs_project_list")
+            project_id = request.POST.get("project_id")
+            proyecto = get_object_or_404(WbsProyecto, pk=project_id)
+            nombre = proyecto.nombre
+            proyecto.delete()
+            messages.success(request, f"El proyecto WBS {nombre} y todo su tablero se eliminaron correctamente.")
+            return redirect("wbs_project_list")
+
+    proyectos = (
+        WbsProyecto.objects.order_by("nombre", "id")
+        .annotate(
+            total_listas=Count("etapas", distinct=True),
+            total_tarjetas=Count("etapas__tareas", distinct=True),
+            total_comentarios=Count("etapas__tareas__comentarios", distinct=True),
+        )
+        .prefetch_related("etapas__tareas")
+    )
+    context = {
+        "form": form,
+        "edit_project": edit_project,
+        "edit_project_form": edit_project_form,
+        "proyectos": proyectos,
+        "can_manage_wbs_board": can_manage_wbs_board(request.user),
+    }
+    return render(request, "gestor_documentos/wbs_projects.html", context)
+
+
+@login_required
+def wbs_board(request, project_id):
+    ensure_role_groups()
+    if not can_view_wbs_board(request.user):
+        return redirect("inicio")
+
+    proyecto = get_object_or_404(WbsProyecto, pk=project_id)
+    assignable_users = _get_wbs_assignable_users()
+    stage_form = WbsEtapaForm(prefix="stage")
+    comment_form = WbsComentarioForm(prefix="comment")
+    description_form = WbsDescripcionTareaForm(prefix="description")
+    subtask_form = WbsSubtareaForm(prefix="subtask")
+    image_form = WbsAdjuntoImagenForm(prefix="image")
+
+    edit_stage = None
+    edit_stage_form = None
+    edit_task = None
+    edit_task_form = None
+
+    edit_stage_id = request.GET.get("editar_etapa")
+    edit_task_id = request.GET.get("editar_tarea")
+    selected_task_id = request.GET.get("tarea")
+    active_stage_id = request.GET.get("columna")
+
+    task_form = WbsTareaForm(prefix="task", assignable_users=assignable_users, proyecto=proyecto)
+    if active_stage_id and str(active_stage_id).isdigit():
+        task_form.fields["etapa"].initial = int(active_stage_id)
+
+    if edit_stage_id and str(edit_stage_id).isdigit():
+        edit_stage = WbsEtapa.objects.filter(pk=int(edit_stage_id), proyecto=proyecto).first()
+        if edit_stage:
+            edit_stage_form = WbsEtapaForm(instance=edit_stage, prefix="edit-stage")
+
+    if edit_task_id and str(edit_task_id).isdigit():
+        edit_task = (
+            WbsTarea.objects.select_related("etapa", "asignado_a")
+            .filter(pk=int(edit_task_id), etapa__proyecto=proyecto)
+            .first()
+        )
+        if edit_task:
+            edit_task_form = WbsTareaForm(
+                instance=edit_task,
+                assignable_users=assignable_users,
+                proyecto=proyecto,
+                prefix="edit-task",
+            )
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "crear_etapa":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para crear etapas.")
+                return redirect("wbs_board", project_id=proyecto.id)
+            stage_form = WbsEtapaForm(request.POST, prefix="stage")
+            if stage_form.is_valid():
+                etapa = stage_form.save(commit=False)
+                etapa.proyecto = proyecto
+                etapa.created_by = request.user
+                etapa.updated_by = request.user
+                etapa.posicion = _get_next_stage_position(proyecto)
+                etapa.save()
+                messages.success(request, f"La etapa {etapa.nombre} se creo correctamente.")
+                return redirect("wbs_board", project_id=proyecto.id)
+
+        if action == "editar_etapa":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para editar etapas.")
+                return redirect("wbs_board", project_id=proyecto.id)
+            stage_id = request.POST.get("stage_id")
+            edit_stage = get_object_or_404(WbsEtapa, pk=stage_id, proyecto=proyecto)
+            edit_stage_form = WbsEtapaForm(request.POST, instance=edit_stage, prefix="edit-stage")
+            if edit_stage_form.is_valid():
+                etapa = edit_stage_form.save(commit=False)
+                etapa.updated_by = request.user
+                etapa.save()
+                messages.success(request, f"La etapa {etapa.nombre} se actualizo correctamente.")
+                return redirect("wbs_board", project_id=proyecto.id)
+
+        if action == "crear_tarea":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para crear tareas.")
+                return redirect("wbs_board", project_id=proyecto.id)
+            task_form = WbsTareaForm(request.POST, assignable_users=assignable_users, proyecto=proyecto, prefix="task")
+            if task_form.is_valid():
+                tarea = task_form.save(commit=False)
+                tarea.numero_secuencial = _get_next_task_sequence(proyecto)
+                tarea.codigo = _build_wbs_task_code(proyecto.prefijo, tarea.numero_secuencial)
+                tarea.created_by = request.user
+                tarea.updated_by = request.user
+                tarea.posicion = _get_next_task_position(tarea.etapa)
+                tarea.save()
+                _sync_wbs_task_dependencies(
+                    tarea,
+                    task_form.cleaned_data.get("dependencias"),
+                    request.user,
+                )
+                messages.success(request, f"La tarea {tarea.titulo} se creo correctamente.")
+                return redirect(f"{reverse('wbs_board', args=[proyecto.id])}?tarea={tarea.id}")
+
+        if action == "editar_tarea":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para editar tareas.")
+                return redirect("wbs_board", project_id=proyecto.id)
+            task_id = request.POST.get("task_id")
+            edit_task = get_object_or_404(WbsTarea, pk=task_id, etapa__proyecto=proyecto)
+            previous_stage = edit_task.etapa
+            edit_task_form = WbsTareaForm(
+                request.POST,
+                instance=edit_task,
+                assignable_users=assignable_users,
+                proyecto=proyecto,
+                prefix="edit-task",
+            )
+            if edit_task_form.is_valid():
+                tarea = edit_task_form.save(commit=False)
+                tarea.updated_by = request.user
+                if tarea.etapa_id != previous_stage.id:
+                    tarea.posicion = _get_next_task_position(tarea.etapa)
+                tarea.save()
+                _sync_wbs_task_dependencies(
+                    tarea,
+                    edit_task_form.cleaned_data.get("dependencias"),
+                    request.user,
+                )
+                if tarea.etapa_id != previous_stage.id:
+                    _normalize_task_positions(previous_stage)
+                messages.success(request, f"La tarea {tarea.titulo} se actualizo correctamente.")
+                return redirect(f"{reverse('wbs_board', args=[proyecto.id])}?tarea={tarea.id}")
+
+        if action == "comentar_tarea":
+            if not can_comment_wbs_tasks(request.user):
+                messages.error(request, "No tienes permisos para comentar tareas.")
+                return redirect("wbs_board", project_id=proyecto.id)
+            task_id = request.POST.get("task_id")
+            tarea = get_object_or_404(WbsTarea, pk=task_id, etapa__proyecto=proyecto)
+            comment_form = WbsComentarioForm(request.POST, prefix="comment")
+            if comment_form.is_valid():
+                comentario = comment_form.save(commit=False)
+                comentario.tarea = tarea
+                comentario.created_by = request.user
+                comentario.save()
+                messages.success(request, "El comentario se guardo correctamente.")
+                return redirect(f"{reverse('wbs_board', args=[proyecto.id])}?tarea={tarea.id}")
+
+        if action == "actualizar_descripcion_tarea":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para editar la descripcion de la tarjeta.")
+                return redirect("wbs_board", project_id=proyecto.id)
+            task_id = request.POST.get("task_id")
+            tarea = get_object_or_404(WbsTarea, pk=task_id, etapa__proyecto=proyecto)
+            description_form = WbsDescripcionTareaForm(request.POST, instance=tarea, prefix="description")
+            if description_form.is_valid():
+                tarea = description_form.save(commit=False)
+                tarea.updated_by = request.user
+                tarea.save(update_fields=["descripcion", "updated_by", "fecha_actualizacion"])
+                messages.success(request, "La descripcion de la tarjeta se actualizo correctamente.")
+                return redirect(f"{reverse('wbs_board', args=[proyecto.id])}?tarea={tarea.id}")
+
+        if action == "crear_subtarea":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para crear subtareas.")
+                return redirect("wbs_board", project_id=proyecto.id)
+            task_id = request.POST.get("task_id")
+            tarea = get_object_or_404(WbsTarea, pk=task_id, etapa__proyecto=proyecto)
+            subtask_form = WbsSubtareaForm(request.POST, prefix="subtask")
+            if subtask_form.is_valid():
+                subtarea = subtask_form.save(commit=False)
+                subtarea.tarea = tarea
+                subtarea.posicion = _get_next_subtask_position(tarea)
+                subtarea.created_by = request.user
+                subtarea.updated_by = request.user
+                subtarea.save()
+                messages.success(request, "La subtarea se creo correctamente.")
+                return redirect(f"{reverse('wbs_board', args=[proyecto.id])}?tarea={tarea.id}")
+
+        if action == "toggle_subtarea":
+            if not can_comment_wbs_tasks(request.user):
+                messages.error(request, "No tienes permisos para actualizar subtareas.")
+                return redirect("wbs_board", project_id=proyecto.id)
+            task_id = request.POST.get("task_id")
+            subtask_id = request.POST.get("subtask_id")
+            tarea = get_object_or_404(WbsTarea, pk=task_id, etapa__proyecto=proyecto)
+            subtarea = get_object_or_404(WbsSubtarea, pk=subtask_id, tarea=tarea)
+            subtarea.completada = request.POST.get("completada") == "1"
+            subtarea.updated_by = request.user
+            subtarea.save(update_fields=["completada", "updated_by", "fecha_actualizacion"])
+            return redirect(f"{reverse('wbs_board', args=[proyecto.id])}?tarea={tarea.id}")
+
+        if action == "adjuntar_imagen_tarea":
+            if not can_manage_wbs_board(request.user):
+                messages.error(request, "No tienes permisos para adjuntar archivos en tareas.")
+                return redirect("wbs_board", project_id=proyecto.id)
+            task_id = request.POST.get("task_id")
+            tarea = get_object_or_404(WbsTarea, pk=task_id, etapa__proyecto=proyecto)
+            image_form = WbsAdjuntoImagenForm(request.POST, request.FILES, prefix="image")
+            if image_form.is_valid():
+                adjunto = image_form.save(commit=False)
+                adjunto.tarea = tarea
+                adjunto.nombre = os.path.basename(adjunto.archivo.name)
+                adjunto.created_by = request.user
+                adjunto.save()
+                messages.success(request, "El archivo se adjunto correctamente a la tarjeta.")
+                return redirect(f"{reverse('wbs_board', args=[proyecto.id])}?tarea={tarea.id}")
+
+    selected_task = None
+    if selected_task_id and str(selected_task_id).isdigit():
+        selected_task = (
+            WbsTarea.objects.select_related("etapa", "asignado_a", "created_by", "updated_by")
+            .prefetch_related(
+                "comentarios__created_by",
+                "adjuntos",
+                "subtareas",
+                Prefetch(
+                    "dependencias",
+                    queryset=WbsDependencia.objects.select_related("depende_de", "depende_de__etapa", "etapa_inicial_dependencia"),
+                ),
+            )
+            .filter(pk=int(selected_task_id), etapa__proyecto=proyecto)
+            .first()
+        )
+        if selected_task and not comment_form.is_bound:
+            comment_form = WbsComentarioForm(prefix="comment")
+        if selected_task and not description_form.is_bound:
+            description_form = WbsDescripcionTareaForm(instance=selected_task, prefix="description")
+        if selected_task and not subtask_form.is_bound:
+            subtask_form = WbsSubtareaForm(prefix="subtask")
+        if selected_task and not image_form.is_bound:
+            image_form = WbsAdjuntoImagenForm(prefix="image")
+
+    etapas = list(
+        WbsEtapa.objects.filter(proyecto=proyecto).order_by("posicion", "id").prefetch_related(
+            Prefetch(
+                "tareas",
+                queryset=(
+                    WbsTarea.objects.select_related("asignado_a", "created_by", "updated_by")
+                    .prefetch_related(
+                        Prefetch(
+                            "dependencias",
+                            queryset=WbsDependencia.objects.select_related("depende_de", "depende_de__etapa"),
+                        )
+                    )
+                    .annotate(
+                        total_adjuntos=Count("adjuntos", distinct=True),
+                        total_comentarios=Count("comentarios", distinct=True),
+                    )
+                    .order_by("posicion", "id")
+                ),
+            )
+        )
+    )
+
+    context = {
+        "proyecto": proyecto,
+        "etapas": etapas,
+        "stage_form": stage_form,
+        "task_form": task_form,
+        "comment_form": comment_form,
+        "description_form": description_form,
+        "subtask_form": subtask_form,
+        "image_form": image_form,
+        "edit_stage": edit_stage,
+        "edit_stage_form": edit_stage_form,
+        "edit_task": edit_task,
+        "edit_task_form": edit_task_form,
+        "selected_task": selected_task,
+        "active_stage_id": int(active_stage_id) if active_stage_id and str(active_stage_id).isdigit() else None,
+        "task_modal_abierto": bool((active_stage_id and str(active_stage_id).isdigit()) or task_form.errors),
+        "next_task_code": _build_wbs_task_code(proyecto.prefijo, _get_next_task_sequence(proyecto)),
+        "can_manage_wbs_board": can_manage_wbs_board(request.user),
+        "can_move_wbs_tasks": can_move_wbs_tasks(request.user),
+        "can_comment_wbs_tasks": can_comment_wbs_tasks(request.user),
+    }
+    return render(request, "gestor_documentos/wbs_board.html", context)
+
+
+@login_required
+def wbs_move_task(request, project_id, task_id):
+    ensure_role_groups()
+    if request.method != "POST" or not can_move_wbs_tasks(request.user):
+        return JsonResponse({"ok": False, "message": "No tienes permisos para mover tareas."}, status=403)
+
+    proyecto = get_object_or_404(WbsProyecto, pk=project_id)
+    task = get_object_or_404(WbsTarea, pk=task_id, etapa__proyecto=proyecto)
+    stage_id = request.POST.get("stage_id")
+    position_value = request.POST.get("position", "0")
+
+    if not str(stage_id).isdigit():
+        return JsonResponse({"ok": False, "message": "La etapa de destino no es valida."}, status=400)
+    if not str(position_value).isdigit():
+        return JsonResponse({"ok": False, "message": "La posicion enviada no es valida."}, status=400)
+
+    target_stage = get_object_or_404(WbsEtapa, pk=int(stage_id), proyecto=proyecto)
+    target_position = int(position_value)
+
+    if target_stage.id != task.etapa_id:
+        blocking_dependencies = _get_wbs_blocking_dependencies(task)
+        if blocking_dependencies:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "message": _build_wbs_dependency_block_message(blocking_dependencies),
+                },
+                status=409,
+            )
+
+    with transaction.atomic():
+        _move_wbs_task(task, target_stage, target_position, request.user)
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "task_id": task.id,
+            "stage_id": target_stage.id,
+            "position": task.posicion,
+        }
+    )
+
+
+@login_required
+def wbs_move_stage(request, project_id, stage_id):
+    ensure_role_groups()
+    if request.method != "POST" or not can_manage_wbs_board(request.user):
+        return JsonResponse({"ok": False, "message": "No tienes permisos para mover listas."}, status=403)
+
+    proyecto = get_object_or_404(WbsProyecto, pk=project_id)
+    stage = get_object_or_404(WbsEtapa, pk=stage_id, proyecto=proyecto)
+    position_value = request.POST.get("position", "0")
+
+    if not str(position_value).isdigit():
+        return JsonResponse({"ok": False, "message": "La posicion enviada no es valida."}, status=400)
+
+    with transaction.atomic():
+        _move_wbs_stage(stage, int(position_value), request.user)
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "stage_id": stage.id,
+            "position": stage.posicion,
+        }
+    )
 
 
 @login_required
@@ -1150,8 +1600,156 @@ def _build_document_status_snapshot():
     return snapshot
 
 
+def _can_access_standard_dashboard(user):
+    return user.is_authenticated and (is_admin(user) or is_visualizador(user) or is_wbs(user))
+
+
+def _get_wbs_assignable_users():
+    return (
+        User.objects.filter(
+            Q(groups__name="WBS") | Q(groups__name="WBS_Desarrollo")
+        )
+        .distinct()
+        .order_by("username")
+    )
+
+
+def _get_next_stage_position(proyecto):
+    return (
+        WbsEtapa.objects.filter(proyecto=proyecto).aggregate(max_position=Max("posicion"))["max_position"] or 0
+    ) + 1
+
+
+def _get_next_task_position(stage):
+    return (
+        WbsTarea.objects.filter(etapa=stage).aggregate(max_position=Max("posicion"))["max_position"] or 0
+    ) + 1
+
+
+def _get_next_subtask_position(task):
+    return (
+        WbsSubtarea.objects.filter(tarea=task).aggregate(max_position=Max("posicion"))["max_position"] or 0
+    ) + 1
+
+
+def _sync_wbs_task_dependencies(task, dependency_tasks, actor):
+    dependency_tasks = list(dependency_tasks or [])
+    dependency_ids = {dependency.pk for dependency in dependency_tasks}
+    existing_dependencies = {
+        dependency.depende_de_id: dependency
+        for dependency in WbsDependencia.objects.filter(tarea=task).select_related("depende_de", "etapa_inicial_dependencia")
+    }
+
+    for dependency_id, dependency in existing_dependencies.items():
+        if dependency_id not in dependency_ids:
+            dependency.delete()
+
+    for dependency_task in dependency_tasks:
+        if dependency_task.pk in existing_dependencies:
+            continue
+        WbsDependencia.objects.create(
+            tarea=task,
+            depende_de=dependency_task,
+            etapa_inicial_dependencia=dependency_task.etapa,
+            created_by=actor,
+        )
+
+
+def _get_wbs_blocking_dependencies(task):
+    return list(
+        WbsDependencia.objects.select_related("depende_de", "depende_de__etapa", "etapa_inicial_dependencia")
+        .filter(
+            tarea=task,
+            depende_de__etapa_id=models.F("etapa_inicial_dependencia_id"),
+        )
+        .order_by("depende_de__numero_secuencial", "depende_de__id")
+    )
+
+
+def _build_wbs_dependency_block_message(blocking_dependencies):
+    if not blocking_dependencies:
+        return "Existe una dependencia que hay que terminar antes de mover esta tarjeta."
+
+    dependency_names = [
+        f"{dependency.depende_de.codigo} ({dependency.depende_de.etapa.nombre})"
+        for dependency in blocking_dependencies[:3]
+    ]
+    dependency_text = ", ".join(dependency_names)
+    if len(blocking_dependencies) == 1:
+        return f"Existe una dependencia que hay que terminar antes de mover esta tarjeta: {dependency_text}."
+    if len(blocking_dependencies) > 3:
+        dependency_text += f" y {len(blocking_dependencies) - 3} mas"
+    return f"Existen dependencias pendientes que debes terminar antes de mover esta tarjeta: {dependency_text}."
+
+
+def _get_next_task_sequence(proyecto):
+    return (
+        WbsTarea.objects.filter(etapa__proyecto=proyecto).aggregate(max_sequence=Max("numero_secuencial"))[
+            "max_sequence"
+        ]
+        or 0
+    ) + 1
+
+
+def _build_wbs_task_code(prefijo, numero_secuencial):
+    return f"{prefijo}-{numero_secuencial:03d}"
+
+
+def _normalize_task_positions(stage):
+    tareas = list(WbsTarea.objects.filter(etapa=stage).order_by("posicion", "id"))
+    for index, tarea in enumerate(tareas):
+        if tarea.posicion != index:
+            WbsTarea.objects.filter(pk=tarea.pk).update(posicion=index)
+
+
+def _normalize_stage_positions(proyecto):
+    etapas = list(WbsEtapa.objects.filter(proyecto=proyecto).order_by("posicion", "id"))
+    for index, etapa in enumerate(etapas):
+        if etapa.posicion != index:
+            WbsEtapa.objects.filter(pk=etapa.pk).update(posicion=index)
+
+
+def _move_wbs_stage(stage, target_position, actor):
+    proyecto = stage.proyecto
+    stages = list(WbsEtapa.objects.filter(proyecto=proyecto).exclude(pk=stage.pk).order_by("posicion", "id"))
+    bounded_position = max(0, min(target_position, len(stages)))
+    stages.insert(bounded_position, stage)
+
+    for index, current_stage in enumerate(stages):
+        current_stage.posicion = index
+        if current_stage.pk == stage.pk:
+            current_stage.updated_by = actor
+        current_stage.save(update_fields=["posicion", "updated_by", "fecha_actualizacion"])
+
+    _normalize_stage_positions(proyecto)
+    stage.refresh_from_db(fields=["posicion"])
+
+
+def _move_wbs_task(task, target_stage, target_position, actor):
+    source_stage = task.etapa
+    current_stage_tasks = list(WbsTarea.objects.filter(etapa=target_stage).exclude(pk=task.pk).order_by("posicion", "id"))
+    bounded_position = max(0, min(target_position, len(current_stage_tasks)))
+    current_stage_tasks.insert(bounded_position, task)
+
+    task.etapa = target_stage
+    task.updated_by = actor
+
+    for index, stage_task in enumerate(current_stage_tasks):
+        stage_task.posicion = index
+        if stage_task.pk == task.pk:
+            stage_task.etapa = target_stage
+            stage_task.updated_by = actor
+        stage_task.save(update_fields=["etapa", "posicion", "updated_by", "fecha_actualizacion"])
+
+    if source_stage_id := getattr(source_stage, "id", None):
+        if source_stage_id != target_stage.id:
+            _normalize_task_positions(source_stage)
+
+    task.refresh_from_db(fields=["posicion", "etapa"])
+
+
 def _build_inicio_dashboard(user):
-    if is_visualizador(user):
+    if is_visualizador(user) or (is_wbs(user) and not user.is_superuser and not user.groups.filter(name="Gestor").exists()):
         return _build_visualizador_dashboard(user)
     return _build_gestor_dashboard(user)
 

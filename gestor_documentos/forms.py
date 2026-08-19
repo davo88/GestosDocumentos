@@ -1,7 +1,18 @@
 from django import forms
 from django.contrib.auth.models import Group, User
 
-from .models import Carpeta, Proyecto, SistemaConfiguracion
+from .models import (
+    Carpeta,
+    Proyecto,
+    SistemaConfiguracion,
+    WbsAdjuntoImagen,
+    WbsDependencia,
+    WbsComentario,
+    WbsEtapa,
+    WbsProyecto,
+    WbsSubtarea,
+    WbsTarea,
+)
 
 
 TICKET_ATTACHMENT_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf", ".docx", ".txt", ".md"}
@@ -194,10 +205,14 @@ class SistemaConfiguracionForm(forms.ModelForm):
 class CrearUsuarioForm(forms.Form):
     ROLE_GESTOR = "gestor"
     ROLE_VISUALIZADOR = "visualizador"
+    ROLE_WBS = "wbs"
+    ROLE_WBS_DESARROLLO = "wbs_desarrollo"
 
     ROLE_CHOICES = [
         (ROLE_GESTOR, "Gestor"),
         (ROLE_VISUALIZADOR, "Visualizador"),
+        (ROLE_WBS, "WBS"),
+        (ROLE_WBS_DESARROLLO, "WBS_Desarrollo"),
     ]
 
     username = forms.CharField(
@@ -241,9 +256,10 @@ class CrearUsuarioForm(forms.Form):
             }
         ),
     )
-    role = forms.ChoiceField(
-        label="Rol",
+    roles = forms.MultipleChoiceField(
+        label="Roles",
         choices=ROLE_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
     )
 
     def clean_username(self):
@@ -259,7 +275,7 @@ class CrearUsuarioForm(forms.Form):
         return password
 
     def save(self):
-        role = self.cleaned_data["role"]
+        roles = self.cleaned_data["roles"]
         user = User.objects.create_user(
             username=self.cleaned_data["username"],
             password=self.cleaned_data["password"],
@@ -268,9 +284,7 @@ class CrearUsuarioForm(forms.Form):
             is_staff=False,
             is_superuser=False,
         )
-        group_name = "Gestor" if role == self.ROLE_GESTOR else "Visualizador"
-        group, _ = Group.objects.get_or_create(name=group_name)
-        user.groups.add(group)
+        user.groups.set(_get_group_objects_from_role_values(roles))
         return user
 
 
@@ -304,9 +318,10 @@ class EditarUsuarioForm(forms.Form):
             }
         ),
     )
-    role = forms.ChoiceField(
-        label="Rol",
+    roles = forms.MultipleChoiceField(
+        label="Roles",
         choices=CrearUsuarioForm.ROLE_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
     )
 
     def __init__(self, *args, user_instance=None, **kwargs):
@@ -316,7 +331,7 @@ class EditarUsuarioForm(forms.Form):
             initial.setdefault("username", user_instance.username)
             initial.setdefault("first_name", user_instance.first_name)
             initial.setdefault("last_name", user_instance.last_name)
-            initial.setdefault("role", _get_user_role_value(user_instance))
+            initial.setdefault("roles", _get_user_role_values(user_instance))
         super().__init__(*args, **kwargs)
 
     def clean_username(self):
@@ -335,7 +350,7 @@ class EditarUsuarioForm(forms.Form):
         return password
 
     def save(self):
-        role = self.cleaned_data["role"]
+        roles = self.cleaned_data["roles"]
         user = self.user_instance
         user.username = self.cleaned_data["username"]
         user.first_name = self.cleaned_data["first_name"].strip()
@@ -344,14 +359,181 @@ class EditarUsuarioForm(forms.Form):
         if password:
             user.set_password(password)
         user.save()
-        user.groups.clear()
-        group_name = "Gestor" if role == CrearUsuarioForm.ROLE_GESTOR else "Visualizador"
-        group, _ = Group.objects.get_or_create(name=group_name)
-        user.groups.add(group)
+        user.groups.set(_get_group_objects_from_role_values(roles))
         return user
 
 
-def _get_user_role_value(user):
+def _get_group_objects_from_role_values(role_values):
+    role_to_group = {
+        CrearUsuarioForm.ROLE_GESTOR: "Gestor",
+        CrearUsuarioForm.ROLE_VISUALIZADOR: "Visualizador",
+        CrearUsuarioForm.ROLE_WBS: "WBS",
+        CrearUsuarioForm.ROLE_WBS_DESARROLLO: "WBS_Desarrollo",
+    }
+    groups = []
+    for role_value in role_values:
+        group_name = role_to_group[role_value]
+        group, _ = Group.objects.get_or_create(name=group_name)
+        groups.append(group)
+    return groups
+
+
+def _get_user_role_values(user):
+    role_values = []
     if user.groups.filter(name="Gestor").exists():
-        return CrearUsuarioForm.ROLE_GESTOR
-    return CrearUsuarioForm.ROLE_VISUALIZADOR
+        role_values.append(CrearUsuarioForm.ROLE_GESTOR)
+    if user.groups.filter(name="Visualizador").exists():
+        role_values.append(CrearUsuarioForm.ROLE_VISUALIZADOR)
+    if user.groups.filter(name="WBS").exists():
+        role_values.append(CrearUsuarioForm.ROLE_WBS)
+    if user.groups.filter(name="WBS_Desarrollo").exists():
+        role_values.append(CrearUsuarioForm.ROLE_WBS_DESARROLLO)
+    return role_values
+
+
+class WbsEtapaForm(forms.ModelForm):
+    class Meta:
+        model = WbsEtapa
+        fields = ["nombre"]
+        widgets = {
+            "nombre": forms.TextInput(
+                attrs={
+                    "autocomplete": "off",
+                    "placeholder": "Ej. En analisis",
+                }
+            ),
+        }
+
+
+class WbsProyectoForm(forms.ModelForm):
+    class Meta:
+        model = WbsProyecto
+        fields = ["nombre", "prefijo", "descripcion"]
+        widgets = {
+            "nombre": forms.TextInput(
+                attrs={
+                    "autocomplete": "off",
+                    "placeholder": "Ej. Plataforma de onboarding",
+                }
+            ),
+            "prefijo": forms.TextInput(
+                attrs={
+                    "autocomplete": "off",
+                    "placeholder": "Ej. ONB",
+                }
+            ),
+            "descripcion": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "Contexto breve del proyecto, objetivo y alcance del tablero.",
+                }
+            ),
+        }
+
+    def clean_prefijo(self):
+        prefijo = (self.cleaned_data.get("prefijo") or "").strip().upper()
+        if not prefijo:
+            raise forms.ValidationError("Captura un prefijo para el proyecto.")
+        return prefijo
+
+
+class WbsTareaForm(forms.ModelForm):
+    dependencias = forms.ModelMultipleChoiceField(
+        label="Dependencia",
+        queryset=WbsTarea.objects.none(),
+        required=False,
+        widget=forms.SelectMultiple(
+            attrs={
+                "size": 6,
+            }
+        ),
+    )
+
+    class Meta:
+        model = WbsTarea
+        fields = ["titulo", "etapa", "asignado_a", "prioridad"]
+        widgets = {
+            "titulo": forms.TextInput(
+                attrs={
+                    "autocomplete": "off",
+                    "placeholder": "Ej. Definir flujo de aprobacion",
+                }
+            ),
+        }
+
+    def __init__(self, *args, assignable_users=None, proyecto=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        stage_queryset = WbsEtapa.objects.order_by("posicion", "id")
+        if proyecto is not None:
+            stage_queryset = stage_queryset.filter(proyecto=proyecto)
+        self.fields["etapa"].queryset = stage_queryset
+        queryset = assignable_users if assignable_users is not None else User.objects.none()
+        self.fields["asignado_a"].queryset = queryset
+        self.fields["asignado_a"].required = False
+        self.fields["asignado_a"].empty_label = "Sin asignar"
+        dependency_queryset = WbsTarea.objects.select_related("etapa").order_by("numero_secuencial", "id")
+        if proyecto is not None:
+            dependency_queryset = dependency_queryset.filter(etapa__proyecto=proyecto)
+        if self.instance.pk:
+            dependency_queryset = dependency_queryset.exclude(pk=self.instance.pk)
+            self.fields["dependencias"].initial = list(
+                WbsDependencia.objects.filter(tarea=self.instance).values_list("depende_de_id", flat=True)
+            )
+        self.fields["dependencias"].queryset = dependency_queryset
+
+    def clean_dependencias(self):
+        dependencias = self.cleaned_data.get("dependencias")
+        if self.instance.pk and dependencias.filter(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Una tarjeta no puede depender de si misma.")
+        return dependencias
+
+
+class WbsDescripcionTareaForm(forms.ModelForm):
+    class Meta:
+        model = WbsTarea
+        fields = ["descripcion"]
+        widgets = {
+            "descripcion": forms.Textarea(
+                attrs={
+                    "rows": 5,
+                    "placeholder": "Agrega el detalle de la tarjeta, alcance, dependencias y criterio de terminado.",
+                }
+            ),
+        }
+
+
+class WbsComentarioForm(forms.ModelForm):
+    class Meta:
+        model = WbsComentario
+        fields = ["comentario"]
+        widgets = {
+            "comentario": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "Agrega contexto, bloqueo o siguiente paso.",
+                }
+            ),
+        }
+
+
+class WbsSubtareaForm(forms.ModelForm):
+    class Meta:
+        model = WbsSubtarea
+        fields = ["titulo"]
+        widgets = {
+            "titulo": forms.TextInput(
+                attrs={
+                    "autocomplete": "off",
+                    "placeholder": "Ej. Validar alcance con el usuario",
+                }
+            ),
+        }
+
+
+class WbsAdjuntoImagenForm(forms.ModelForm):
+    class Meta:
+        model = WbsAdjuntoImagen
+        fields = ["archivo"]
+        widgets = {
+            "archivo": forms.ClearableFileInput(),
+        }

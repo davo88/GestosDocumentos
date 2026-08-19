@@ -1,0 +1,725 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}{{ proyecto.nombre }} | Tablero WBS{% endblock %}
+
+{% block content %}
+<div class="trello-shell">
+    <div class="trello-header">
+        <div>
+            <h1>{{ proyecto.nombre }}</h1>
+            <p>{{ proyecto.descripcion|default:"Sin descripcion todavia para este proyecto WBS." }}</p>
+        </div>
+        <div class="board-actions">
+            <a class="secondary-button" href="{% url 'wbs_project_list' %}">Volver a proyectos</a>
+            <span class="role-badge wbs">WBS</span>
+            <span class="role-badge wbs-desarrollo">WBS_Desarrollo</span>
+        </div>
+    </div>
+
+    <div class="trello-side-layout trello-side-layout-full">
+        <div class="trello-board-wrap">
+            <div class="trello-board" id="wbs-board">
+                {% for etapa in etapas %}
+                    <section class="trello-list" data-stage-id="{{ etapa.id }}" draggable="{% if can_manage_wbs_board %}true{% else %}false{% endif %}">
+                        <div class="trello-list-header">
+                            <div>
+                                <h2>{{ etapa.nombre }}</h2>
+                                <div class="trello-list-subtitle">{{ etapa.tareas.count }} tarjeta{{ etapa.tareas.count|pluralize:"s" }}</div>
+                            </div>
+                            {% if can_manage_wbs_board %}
+                                <a class="trello-subtle-link" href="{% url 'wbs_board' proyecto.id %}?editar_etapa={{ etapa.id }}">Editar</a>
+                            {% endif %}
+                        </div>
+
+                        <div class="trello-card-stack" data-stage-dropzone="{{ etapa.id }}">
+                            {% for tarea in etapa.tareas.all %}
+                                <article class="trello-card" draggable="{% if can_move_wbs_tasks %}true{% else %}false{% endif %}" data-task-id="{{ tarea.id }}">
+                                    <div class="trello-card-top">
+                                        <span class="trello-card-code">{{ tarea.codigo }}</span>
+                                        <span class="trello-card-more">...</span>
+                                    </div>
+                                    <h3>{{ tarea.titulo }}</h3>
+                                    <div class="trello-card-meta">
+                                        <span class="board-pill {{ tarea.prioridad }}">{{ tarea.get_prioridad_display }}</span>
+                                        {% if tarea.dependencias.all %}
+                                            <span class="trello-dependency-pill">
+                                                Dep
+                                                {% with primera_dependencia=tarea.dependencias.all.0 %}
+                                                    {{ primera_dependencia.depende_de.codigo }}
+                                                {% endwith %}
+                                                {% if tarea.dependencias.count > 1 %}
+                                                    +{{ tarea.dependencias.count|add:"-1" }}
+                                                {% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="trello-card-footer">
+                                        <div class="trello-assignee">
+                                            {% if tarea.asignado_a %}
+                                                <span class="trello-avatar">{{ tarea.asignado_a.username|slice:":2"|upper }}</span>
+                                                <span>{{ tarea.asignado_a.username }}</span>
+                                            {% else %}
+                                                <span class="trello-avatar">--</span>
+                                                <span>Sin asignar</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="trello-card-stats">
+                                            <span class="trello-card-stat">Adj {{ tarea.total_adjuntos }}</span>
+                                            <span class="trello-card-stat">Com {{ tarea.total_comentarios }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="trello-card-footer">
+                                        <a class="trello-link" href="{% url 'wbs_board' proyecto.id %}?tarea={{ tarea.id }}">Abrir</a>
+                                        {% if can_manage_wbs_board %}
+                                            <a class="trello-subtle-link" href="{% url 'wbs_board' proyecto.id %}?editar_tarea={{ tarea.id }}">Editar</a>
+                                        {% endif %}
+                                    </div>
+                                </article>
+                            {% empty %}
+                                <div class="board-empty">Todavia no hay tarjetas en esta lista.</div>
+                            {% endfor %}
+                        </div>
+
+                        {% if can_manage_wbs_board %}
+                            <button class="trello-add-card" type="button" data-open-task-modal data-stage-id="{{ etapa.id }}">+ Añadir una tarjeta</button>
+                        {% endif %}
+                    </section>
+                {% endfor %}
+
+                {% if can_manage_wbs_board %}
+                    <section class="trello-list" style="background: rgba(255,255,255,0.12); min-height: auto;">
+                        <form class="trello-list-composer" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="crear_etapa">
+                            {{ stage_form.nombre }}
+                            <div class="trello-composer-actions">
+                                <button class="primary-button" type="submit">Añadir una lista</button>
+                            </div>
+                        </form>
+                    </section>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if can_manage_wbs_board %}
+    <div class="modal-backdrop {% if edit_stage and edit_stage_form %}open{% endif %}" id="editar-lista-wbs-modal">
+        <div class="modal">
+            <h2>Editar lista</h2>
+            <p>Actualiza el nombre de la lista del tablero.</p>
+
+            {% if edit_stage and edit_stage_form %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="editar_etapa">
+                    <input type="hidden" name="stage_id" value="{{ edit_stage.id }}">
+
+                    <div class="field">
+                        <label for="{{ edit_stage_form.nombre.id_for_label }}">Nombre de la lista</label>
+                        {{ edit_stage_form.nombre }}
+                        {% if edit_stage_form.nombre.errors %}
+                            <div class="field-errors">{{ edit_stage_form.nombre.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="modal-actions">
+                        <a class="secondary-button" href="{% url 'wbs_board' proyecto.id %}">Cancelar</a>
+                        <button class="primary-button" type="submit">Guardar lista</button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="modal-backdrop {% if task_modal_abierto %}open{% endif %}" id="crear-tarea-wbs-modal">
+        <div class="modal">
+            <h2>Nueva tarjeta</h2>
+            <p>Captura la informacion de la nueva tarjeta y asignala a una lista del proyecto.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crear_tarea">
+
+                <div class="board-sidecard">
+                    <strong>Codigo automatico</strong>
+                    <p>{{ next_task_code }}</p>
+                </div>
+
+                <div class="field">
+                    <label for="{{ task_form.titulo.id_for_label }}">Titulo</label>
+                    {{ task_form.titulo }}
+                    {% if task_form.titulo.errors %}
+                        <div class="field-errors">{{ task_form.titulo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ task_form.etapa.id_for_label }}">Lista</label>
+                    {{ task_form.etapa }}
+                    {% if task_form.etapa.errors %}
+                        <div class="field-errors">{{ task_form.etapa.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ task_form.asignado_a.id_for_label }}">Asignado a</label>
+                    {{ task_form.asignado_a }}
+                    {% if task_form.asignado_a.errors %}
+                        <div class="field-errors">{{ task_form.asignado_a.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ task_form.prioridad.id_for_label }}">Prioridad</label>
+                    {{ task_form.prioridad }}
+                    {% if task_form.prioridad.errors %}
+                        <div class="field-errors">{{ task_form.prioridad.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ task_form.dependencias.id_for_label }}">Dependencia</label>
+                    {{ task_form.dependencias }}
+                    {% if task_form.dependencias.errors %}
+                        <div class="field-errors">{{ task_form.dependencias.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary-button" type="button" data-close-task-modal>Cancelar</button>
+                    <button class="primary-button" type="submit">Guardar tarjeta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+{% if edit_task and edit_task_form and can_manage_wbs_board %}
+    <div class="modal-backdrop open" id="editar-tarea-wbs-modal">
+        <div class="modal">
+            <h2>Editar tarjeta</h2>
+            <p>Actualiza la informacion de la tarjeta dentro del proyecto.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="editar_tarea">
+                <input type="hidden" name="task_id" value="{{ edit_task.id }}">
+                <div class="field">
+                    <label for="{{ edit_task_form.titulo.id_for_label }}">Titulo</label>
+                    {{ edit_task_form.titulo }}
+                </div>
+                <div class="field">
+                    <label for="{{ edit_task_form.etapa.id_for_label }}">Lista</label>
+                    {{ edit_task_form.etapa }}
+                </div>
+                <div class="field">
+                    <label for="{{ edit_task_form.asignado_a.id_for_label }}">Asignado a</label>
+                    {{ edit_task_form.asignado_a }}
+                </div>
+                <div class="field">
+                    <label for="{{ edit_task_form.prioridad.id_for_label }}">Prioridad</label>
+                    {{ edit_task_form.prioridad }}
+                </div>
+                <div class="field">
+                    <label for="{{ edit_task_form.dependencias.id_for_label }}">Dependencia</label>
+                    {{ edit_task_form.dependencias }}
+                    {% if edit_task_form.dependencias.errors %}
+                        <div class="field-errors">{{ edit_task_form.dependencias.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="modal-actions">
+                    <a class="secondary-button" href="{% url 'wbs_board' proyecto.id %}?tarea={{ edit_task.id }}">Cancelar</a>
+                    <button class="primary-button" type="submit">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+{% if selected_task %}
+    <div class="modal-backdrop open" id="detalle-tarea-wbs-modal">
+        <div class="modal modal-wide">
+            <div class="wbs-detail-modal">
+                <div class="wbs-detail-header">
+                    <div class="wbs-detail-header-main">
+                        <span class="trello-card-code">{{ selected_task.codigo }}</span>
+                        <div class="wbs-detail-title-row">
+                            <h2>{{ selected_task.titulo }}</h2>
+                            <span class="board-pill {{ selected_task.prioridad }}">{{ selected_task.get_prioridad_display }}</span>
+                        </div>
+                        <p>{{ selected_task.etapa.nombre }}</p>
+                    </div>
+                    <a class="board-modal-close" href="{% url 'wbs_board' proyecto.id %}" aria-label="Cerrar modal">&times;</a>
+                </div>
+
+                <div class="wbs-detail-layout">
+                    <div class="wbs-detail-main">
+                        <section class="wbs-detail-section">
+                            <h3>Descripcion</h3>
+                            {% if can_manage_wbs_board %}
+                                <form class="wbs-description-form" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="actualizar_descripcion_tarea">
+                                    <input type="hidden" name="task_id" value="{{ selected_task.id }}">
+                                    <div class="wbs-detail-description-editor">
+                                        {{ description_form.descripcion }}
+                                        {% if description_form.descripcion.errors %}
+                                            <div class="field-errors">{{ description_form.descripcion.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="wbs-description-actions">
+                                        <button class="primary-button" type="submit">Guardar descripcion</button>
+                                    </div>
+                                </form>
+                            {% else %}
+                                <div class="wbs-detail-description">
+                                    {{ selected_task.descripcion|default:"Sin descripcion todavia."|linebreaksbr }}
+                                </div>
+                            {% endif %}
+                        </section>
+
+                        <section class="wbs-detail-section">
+                            <div class="wbs-detail-section-top">
+                                <h3>Subtareas</h3>
+                                <span class="wbs-detail-counter">
+                                    {{ selected_task.subtareas.count }} total
+                                </span>
+                            </div>
+
+                            {% if can_manage_wbs_board %}
+                                <form class="wbs-subtask-form" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="crear_subtarea">
+                                    <input type="hidden" name="task_id" value="{{ selected_task.id }}">
+                                    <div class="wbs-subtask-form-row">
+                                        {{ subtask_form.titulo }}
+                                        <button class="primary-button" type="submit">Agregar</button>
+                                    </div>
+                                    {% if subtask_form.titulo.errors %}
+                                        <div class="field-errors">{{ subtask_form.titulo.errors }}</div>
+                                    {% endif %}
+                                </form>
+                            {% endif %}
+
+                            <div class="wbs-subtask-list">
+                                {% for subtarea in selected_task.subtareas.all %}
+                                    <form class="wbs-subtask-item {% if subtarea.completada %}done{% endif %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="toggle_subtarea">
+                                        <input type="hidden" name="task_id" value="{{ selected_task.id }}">
+                                        <input type="hidden" name="subtask_id" value="{{ subtarea.id }}">
+                                        <input type="hidden" name="completada" value="{% if subtarea.completada %}0{% else %}1{% endif %}">
+                                        <button class="wbs-subtask-check" type="submit" aria-label="{% if subtarea.completada %}Marcar como pendiente{% else %}Marcar como completada{% endif %}">
+                                            {% if subtarea.completada %}✓{% endif %}
+                                        </button>
+                                        <div class="wbs-subtask-copy">
+                                            <strong>{{ subtarea.titulo }}</strong>
+                                        </div>
+                                    </form>
+                                {% empty %}
+                                    <div class="board-empty">Todavia no hay subtareas en esta tarjeta.</div>
+                                {% endfor %}
+                            </div>
+                        </section>
+
+                        <section class="wbs-detail-section">
+                            <h3>Comentarios</h3>
+                            {% if can_comment_wbs_tasks %}
+                                <form class="wbs-comment-composer" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="comentar_tarea">
+                                    <input type="hidden" name="task_id" value="{{ selected_task.id }}">
+                                    <div class="wbs-comment-composer-avatar">{{ request.user.username|slice:":2"|upper }}</div>
+                                    <div class="wbs-comment-composer-body">
+                                        {{ comment_form.comentario }}
+                                        {% if comment_form.comentario.errors %}
+                                            <div class="field-errors">{{ comment_form.comentario.errors }}</div>
+                                        {% endif %}
+                                        <div class="wbs-comment-composer-footer">
+                                            <span class="wbs-comment-composer-hint">Escribe un comentario para la tarjeta.</span>
+                                            <button class="primary-button" type="submit">Comentar</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            {% endif %}
+
+                            <div class="board-comment-list">
+                                {% for comentario in selected_task.comentarios.all %}
+                                    <div class="wbs-comment-item">
+                                        <div class="wbs-comment-avatar">{{ comentario.created_by.username|default:"SI"|slice:":2"|upper }}</div>
+                                        <div class="wbs-comment-content">
+                                            <div class="wbs-comment-meta">
+                                                <strong>{{ comentario.created_by.username|default:"Sistema" }}</strong>
+                                                <span>{{ comentario.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                                            </div>
+                                            <p>{{ comentario.comentario|linebreaksbr }}</p>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <div class="board-empty">Todavia no hay comentarios en esta tarjeta.</div>
+                                {% endfor %}
+                            </div>
+                        </section>
+                    </div>
+
+                    <aside class="wbs-detail-sidebar">
+                        <section class="wbs-detail-sidecard">
+                            <h3>Detalles</h3>
+                            <div class="wbs-detail-facts">
+                                <div class="wbs-detail-fact">
+                                    <span>Estado</span>
+                                    <strong>{{ selected_task.etapa.nombre }}</strong>
+                                </div>
+                                <div class="wbs-detail-fact">
+                                    <span>Asignado a</span>
+                                    <strong>
+                                        {% if selected_task.asignado_a %}
+                                            <span class="trello-assignee">
+                                                <span class="trello-avatar">{{ selected_task.asignado_a.username|slice:":2"|upper }}</span>
+                                                <span>{{ selected_task.asignado_a.username }}</span>
+                                            </span>
+                                        {% else %}
+                                            Sin asignar
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                                <div class="wbs-detail-fact">
+                                    <span>Creada por</span>
+                                    <strong>
+                                        <span class="trello-assignee">
+                                            <span class="trello-avatar">{{ selected_task.created_by.username|default:"SI"|slice:":2"|upper }}</span>
+                                            <span>{{ selected_task.created_by.username|default:"Sistema" }}</span>
+                                        </span>
+                                    </strong>
+                                </div>
+                                <div class="wbs-detail-fact">
+                                    <span>Actualizada</span>
+                                    <strong>{{ selected_task.fecha_actualizacion|date:"d/m/Y - H:i" }}</strong>
+                                </div>
+                                <div class="wbs-detail-fact">
+                                    <span>Dependencias</span>
+                                    <strong class="wbs-dependency-summary">
+                                        {% for dependencia in selected_task.dependencias.all %}
+                                            <span class="wbs-dependency-chip {% if dependencia.depende_de.etapa_id == dependencia.etapa_inicial_dependencia_id %}blocked{% else %}done{% endif %}">
+                                                {{ dependencia.depende_de.codigo }}
+                                            </span>
+                                        {% empty %}
+                                            Sin dependencias
+                                        {% endfor %}
+                                    </strong>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="wbs-detail-sidecard">
+                            <div class="wbs-detail-sidecard-top">
+                                <h3>Archivos</h3>
+                                {% if can_manage_wbs_board %}
+                                    <span class="wbs-detail-mini-action">+ Anadir</span>
+                                {% endif %}
+                            </div>
+
+                            {% if can_manage_wbs_board %}
+                                <form class="wbs-file-upload-form" method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="adjuntar_imagen_tarea">
+                                    <input type="hidden" name="task_id" value="{{ selected_task.id }}">
+                                    <div class="field">
+                                        <label for="{{ image_form.archivo.id_for_label }}">Adjuntar archivo</label>
+                                        {{ image_form.archivo }}
+                                        {% if image_form.archivo.errors %}
+                                            <div class="field-errors">{{ image_form.archivo.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <button class="secondary-button" type="submit">Subir archivo</button>
+                                </form>
+                            {% endif %}
+
+                            <div class="wbs-file-list">
+                                {% for adjunto in selected_task.adjuntos.all %}
+                                    <a class="wbs-file-item" href="{{ adjunto.archivo.url }}" target="_blank" rel="noopener noreferrer">
+                                        <div class="wbs-file-icon">
+                                            {% if adjunto.is_image %}
+                                                IMG
+                                            {% else %}
+                                                {{ adjunto.extension|default:".file"|cut:"."|upper|truncatechars:4 }}
+                                            {% endif %}
+                                        </div>
+                                        <div class="wbs-file-copy">
+                                            <strong>{{ adjunto.nombre }}</strong>
+                                            <span>
+                                                {% if adjunto.is_image %}
+                                                    Imagen
+                                                {% else %}
+                                                    Archivo {{ adjunto.extension|upper }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </a>
+                                {% empty %}
+                                    <div class="board-empty">Todavia no hay archivos adjuntos en esta tarjeta.</div>
+                                {% endfor %}
+                            </div>
+                        </section>
+                    </aside>
+                </div>
+
+                <div class="wbs-detail-footer">
+                    <a class="secondary-button" href="{% url 'wbs_board' proyecto.id %}">Cerrar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<div class="modal-backdrop" id="wbs-dependency-alert-modal">
+    <div class="modal wbs-alert-modal">
+        <div class="wbs-alert-modal-top">
+            <h2>Dependencia pendiente</h2>
+            <button class="board-modal-close" type="button" data-close-dependency-alert>&times;</button>
+        </div>
+        <p id="wbs-dependency-alert-message">Existe una dependencia que hay que terminar antes de mover esta tarjeta.</p>
+        <div class="modal-actions">
+            <button class="primary-button" type="button" data-close-dependency-alert>Entendido</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const board = document.getElementById("wbs-board");
+        if (!board) {
+            return;
+        }
+
+        const dependencyAlertModal = document.getElementById("wbs-dependency-alert-modal");
+        const dependencyAlertMessage = document.getElementById("wbs-dependency-alert-message");
+        const dependencyAlertCloseButtons = document.querySelectorAll("[data-close-dependency-alert]");
+        let dependencyAlertOnClose = null;
+
+        const getCookie = (name) => {
+            const cookies = document.cookie ? document.cookie.split(";") : [];
+            for (const cookie of cookies) {
+                const trimmed = cookie.trim();
+                if (trimmed.startsWith(name + "=")) {
+                    return decodeURIComponent(trimmed.slice(name.length + 1));
+                }
+            }
+            return "";
+        };
+
+        const csrfToken = getCookie("csrftoken");
+        let draggingCard = null;
+        let draggingStage = null;
+
+        const openDependencyAlert = (message, onClose) => {
+            if (!dependencyAlertModal || !dependencyAlertMessage) {
+                window.location.reload();
+                return;
+            }
+            dependencyAlertMessage.textContent = message;
+            dependencyAlertOnClose = onClose || null;
+            dependencyAlertModal.classList.add("open");
+        };
+
+        const closeDependencyAlert = () => {
+            if (!dependencyAlertModal) {
+                return;
+            }
+            dependencyAlertModal.classList.remove("open");
+            const callback = dependencyAlertOnClose;
+            dependencyAlertOnClose = null;
+            if (typeof callback === "function") {
+                callback();
+            }
+        };
+
+        dependencyAlertCloseButtons.forEach((button) => {
+            button.addEventListener("click", closeDependencyAlert);
+        });
+
+        if (dependencyAlertModal) {
+            dependencyAlertModal.addEventListener("click", (event) => {
+                if (event.target === dependencyAlertModal) {
+                    closeDependencyAlert();
+                }
+            });
+        }
+
+        board.querySelectorAll(".trello-card[draggable='true']").forEach((card) => {
+            card.addEventListener("dragstart", () => {
+                draggingCard = card;
+                card.classList.add("dragging");
+            });
+
+            card.addEventListener("dragend", () => {
+                if (draggingCard) {
+                    draggingCard.classList.remove("dragging");
+                }
+                draggingCard = null;
+                board.querySelectorAll(".trello-list").forEach((column) => column.classList.remove("dragover"));
+            });
+        });
+
+        board.querySelectorAll(".trello-list[data-stage-id][draggable='true']").forEach((list) => {
+            list.addEventListener("dragstart", (event) => {
+                if (event.target.closest(".trello-card") || event.target.closest(".trello-add-card") || event.target.closest("a") || event.target.closest("button")) {
+                    return;
+                }
+                draggingStage = list;
+                list.classList.add("dragging");
+            });
+
+            list.addEventListener("dragend", () => {
+                if (draggingStage) {
+                    draggingStage.classList.remove("dragging");
+                }
+                draggingStage = null;
+                board.querySelectorAll(".trello-list").forEach((column) => column.classList.remove("dragover"));
+            });
+
+            list.addEventListener("dragover", (event) => {
+                if (!draggingStage || draggingCard || draggingStage === list) {
+                    return;
+                }
+                event.preventDefault();
+                list.classList.add("dragover");
+            });
+
+            list.addEventListener("dragleave", (event) => {
+                if (!list.contains(event.relatedTarget)) {
+                    list.classList.remove("dragover");
+                }
+            });
+
+            list.addEventListener("drop", async (event) => {
+                if (!draggingStage || draggingCard || draggingStage === list) {
+                    return;
+                }
+                event.preventDefault();
+                list.classList.remove("dragover");
+
+                const columns = Array.from(board.querySelectorAll(".trello-list[data-stage-id]")).filter((item) => item !== draggingStage);
+                const targetIndex = columns.indexOf(list);
+                const insertAt = targetIndex === -1 ? columns.length : targetIndex;
+                if (insertAt >= columns.length) {
+                    board.insertBefore(draggingStage, list.nextSibling);
+                } else {
+                    board.insertBefore(draggingStage, list);
+                }
+
+                const formData = new FormData();
+                formData.append("position", insertAt);
+                formData.append("csrfmiddlewaretoken", csrfToken);
+
+                const stageId = draggingStage.dataset.stageId;
+                const response = await fetch("{% url 'wbs_move_stage' proyecto.id 0 %}".replace("/0/mover/", `/${stageId}/mover/`), {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                if (!response.ok) {
+                    window.location.reload();
+                    return;
+                }
+
+                window.location.reload();
+            });
+        });
+
+        board.querySelectorAll(".trello-list[data-stage-id]").forEach((column) => {
+            const dropzone = column.querySelector(".trello-card-stack");
+            if (!dropzone) {
+                return;
+            }
+
+            column.addEventListener("dragover", (event) => {
+                if (!draggingCard || draggingStage) {
+                    return;
+                }
+                event.preventDefault();
+                column.classList.add("dragover");
+            });
+
+            column.addEventListener("dragleave", (event) => {
+                if (!column.contains(event.relatedTarget)) {
+                    column.classList.remove("dragover");
+                }
+            });
+
+            column.addEventListener("drop", async (event) => {
+                event.preventDefault();
+                column.classList.remove("dragover");
+                if (!draggingCard || draggingStage) {
+                    return;
+                }
+
+                const taskId = draggingCard.dataset.taskId;
+                const stageId = column.dataset.stageId;
+                const cards = Array.from(dropzone.querySelectorAll(".trello-card")).filter((item) => item !== draggingCard);
+                const position = cards.length;
+                dropzone.appendChild(draggingCard);
+
+                const formData = new FormData();
+                formData.append("stage_id", stageId);
+                formData.append("position", position);
+                formData.append("csrfmiddlewaretoken", csrfToken);
+
+                const response = await fetch("{% url 'wbs_move_task' proyecto.id 0 %}".replace("/0/mover/", `/${taskId}/mover/`), {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                if (!response.ok) {
+                    let message = "Existe una dependencia que hay que terminar antes de mover esta tarjeta.";
+                    try {
+                        const data = await response.json();
+                        if (data && data.message) {
+                            message = data.message;
+                        }
+                    } catch (error) {
+                    }
+                    openDependencyAlert(message, () => window.location.reload());
+                    return;
+                }
+
+                window.location.reload();
+            });
+        });
+
+        const taskModal = document.getElementById("crear-tarea-wbs-modal");
+        const taskCloseButton = document.querySelector("[data-close-task-modal]");
+        const taskOpenButtons = document.querySelectorAll("[data-open-task-modal]");
+        const stageSelect = document.getElementById("{{ task_form.etapa.id_for_label }}");
+
+        if (taskModal && taskCloseButton && taskOpenButtons.length && stageSelect) {
+            const openTaskModal = (stageId) => {
+                if (stageId) {
+                    stageSelect.value = stageId;
+                }
+                taskModal.classList.add("open");
+            };
+
+            const closeTaskModal = () => taskModal.classList.remove("open");
+
+            taskOpenButtons.forEach((button) => {
+                button.addEventListener("click", () => openTaskModal(button.dataset.stageId));
+            });
+
+            taskCloseButton.addEventListener("click", closeTaskModal);
+            taskModal.addEventListener("click", (event) => {
+                if (event.target === taskModal) {
+                    closeTaskModal();
+                }
+            });
+        }
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,252 @@
+{% extends "gestor_documentos/base.html" %}
+
+{% block title %}Proyectos WBS | Gestor de Documentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Proyectos WBS</h1>
+        <p class="page-subtitle">Selecciona un proyecto para entrar a su tablero o crea uno nuevo solo para la operacion WBS.</p>
+    </div>
+    {% if can_manage_wbs_board %}
+        <button class="primary-button" type="button" data-open-create-project>Crear proyecto</button>
+    {% endif %}
+</div>
+
+<div class="project-canvas">
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Proyecto</th>
+                    <th>Prefijo</th>
+                    <th>Descripcion</th>
+                    <th>Listas</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proyecto in proyectos %}
+                    <tr>
+                        <td><strong>{{ proyecto.nombre }}</strong></td>
+                        <td><span class="role-badge wbs">{{ proyecto.prefijo }}</span></td>
+                        <td>{{ proyecto.descripcion|default:"Sin descripcion registrada para este proyecto WBS." }}</td>
+                        <td>
+                            {% if proyecto.etapas.all %}
+                                <div class="workspace-shell">
+                                    {% for etapa in proyecto.etapas.all %}
+                                        <span class="role-badge visualizador">{{ etapa.nombre }}: {{ etapa.tareas.count }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="document-action">Sin listas</span>
+                            {% endif %}
+                        </td>
+                        <td class="table-actions">
+                            <div class="document-actions">
+                                <a class="primary-button" href="{% url 'wbs_board' proyecto.id %}">Abrir tablero</a>
+                                {% if can_manage_wbs_board %}
+                                    <a class="secondary-button" href="{% url 'wbs_project_list' %}?editar={{ proyecto.id }}">Editar</a>
+                                    <button
+                                        class="danger-button"
+                                        type="button"
+                                        data-open-delete-project
+                                        data-project-id="{{ proyecto.id }}"
+                                        data-project-name="{{ proyecto.nombre }}"
+                                        data-project-lists="{{ proyecto.total_listas }}"
+                                        data-project-cards="{{ proyecto.total_tarjetas }}"
+                                        data-project-comments="{{ proyecto.total_comentarios }}"
+                                    >
+                                        Eliminar
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            Aun no hay proyectos WBS. {% if can_manage_wbs_board %}Crea el primero para empezar a trabajar el tablero por proyecto.{% else %}Espera a que un usuario WBS cree uno.{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if can_manage_wbs_board %}
+    <div class="modal-backdrop {% if form.errors and not edit_project %}open{% endif %}" id="crear-proyecto-wbs-modal">
+        <div class="modal">
+            <h2>Nuevo proyecto WBS</h2>
+            <p>Captura el nombre y una descripcion breve del proyecto para abrir su tablero independiente.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crear_proyecto">
+
+                <div class="field">
+                    <label for="{{ form.nombre.id_for_label }}">Nombre del proyecto</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                        <div class="field-errors">{{ form.nombre.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.prefijo.id_for_label }}">Prefijo</label>
+                    {{ form.prefijo }}
+                    {% if form.prefijo.errors %}
+                        <div class="field-errors">{{ form.prefijo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.descripcion.id_for_label }}">Descripcion</label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}
+                        <div class="field-errors">{{ form.descripcion.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary-button" type="button" data-close-create-project>Cancelar</button>
+                    <button class="primary-button" type="submit">Crear proyecto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-backdrop {% if edit_project and edit_project_form %}open{% endif %}" id="editar-proyecto-wbs-modal">
+        <div class="modal">
+            <h2>Editar proyecto WBS</h2>
+            <p>Actualiza nombre, prefijo y descripcion del proyecto antes de volver al tablero.</p>
+
+            {% if edit_project and edit_project_form %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="editar_proyecto">
+                    <input type="hidden" name="project_id" value="{{ edit_project.id }}">
+
+                    <div class="field">
+                        <label for="{{ edit_project_form.nombre.id_for_label }}">Nombre del proyecto</label>
+                        {{ edit_project_form.nombre }}
+                    </div>
+
+                    <div class="field">
+                        <label for="{{ edit_project_form.prefijo.id_for_label }}">Prefijo</label>
+                        {{ edit_project_form.prefijo }}
+                    </div>
+
+                    <div class="field">
+                        <label for="{{ edit_project_form.descripcion.id_for_label }}">Descripcion</label>
+                        {{ edit_project_form.descripcion }}
+                    </div>
+
+                    <div class="modal-actions">
+                        <a class="secondary-button" href="{% url 'wbs_project_list' %}">Cancelar</a>
+                        <button class="primary-button" type="submit">Guardar cambios</button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const createModal = document.getElementById("crear-proyecto-wbs-modal");
+            const editModal = document.getElementById("editar-proyecto-wbs-modal");
+            const openButton = document.querySelector("[data-open-create-project]");
+            const closeButton = document.querySelector("[data-close-create-project]");
+
+            if (!createModal || !openButton || !closeButton) {
+                return;
+            }
+
+            const openModal = () => createModal.classList.add("open");
+            const closeModal = () => createModal.classList.remove("open");
+
+            openButton.addEventListener("click", openModal);
+            closeButton.addEventListener("click", closeModal);
+            createModal.addEventListener("click", (event) => {
+                if (event.target === createModal) {
+                    closeModal();
+                }
+            });
+
+            if (editModal) {
+                editModal.addEventListener("click", (event) => {
+                    if (event.target === editModal) {
+                        window.location.href = "{% url 'wbs_project_list' %}";
+                    }
+                });
+            }
+        })();
+    </script>
+
+    <div class="modal-backdrop" id="eliminar-proyecto-wbs-modal">
+        <div class="modal">
+            <h2>Eliminar proyecto WBS</h2>
+            <p id="delete-project-copy">Se eliminara este proyecto y todo su contenido del tablero.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="eliminar_proyecto">
+                <input type="hidden" name="project_id" id="delete-project-id">
+
+                <div class="board-sidecard">
+                    <strong id="delete-project-name">Proyecto</strong>
+                    <p id="delete-project-impact">Se borraran todas sus listas, tarjetas y comentarios.</p>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary-button" type="button" data-close-delete-project>Cancelar</button>
+                    <button class="danger-button" type="submit">Eliminar proyecto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById("eliminar-proyecto-wbs-modal");
+            const closeButton = document.querySelector("[data-close-delete-project]");
+            const idInput = document.getElementById("delete-project-id");
+            const nameNode = document.getElementById("delete-project-name");
+            const impactNode = document.getElementById("delete-project-impact");
+            const copyNode = document.getElementById("delete-project-copy");
+            const openButtons = document.querySelectorAll("[data-open-delete-project]");
+
+            if (!modal || !closeButton || !idInput || !nameNode || !impactNode || !copyNode || !openButtons.length) {
+                return;
+            }
+
+            const openModal = (button) => {
+                const projectId = button.dataset.projectId || "";
+                const projectName = button.dataset.projectName || "este proyecto";
+                const totalLists = button.dataset.projectLists || "0";
+                const totalCards = button.dataset.projectCards || "0";
+                const totalComments = button.dataset.projectComments || "0";
+
+                idInput.value = projectId;
+                nameNode.textContent = projectName;
+                copyNode.textContent = `Vas a eliminar ${projectName}. Esta accion no se puede deshacer.`;
+                impactNode.textContent = `Se borrara el proyecto completo junto con ${totalLists} lista(s), ${totalCards} tarjeta(s) y ${totalComments} comentario(s).`;
+                modal.classList.add("open");
+            };
+
+            const closeModal = () => modal.classList.remove("open");
+
+            openButtons.forEach((button) => {
+                button.addEventListener("click", () => openModal(button));
+            });
+            closeButton.addEventListener("click", closeModal);
+            modal.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+{% endif %}
+{% endblock %}
