@@ -225,6 +225,40 @@ button, input, select, textarea { font-family: inherit; }
 .section-count { display: grid; min-width: 28px; height: 28px; place-items: center; border-radius: 999px; color: #1a73e8; background: #e8f0fe; font-size: .75rem; font-weight: 700; }
 .section-link { color: var(--dot-blue-dark); font-size: .76rem; font-weight: 600; }
 
+/* WBS comparte la misma escala visual del resto de Gestos. */
+.page .project-canvas,
+.page .trello-shell,
+.page .trello-side-layout,
+.page .trello-board-wrap { width: 100%; max-width: none; }
+.page .trello-header {
+    padding: 24px 28px;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 68%, #287fb8 100%);
+    box-shadow: var(--dot-shadow);
+}
+.page .trello-header h1 { margin-bottom: 5px; font-size: 1.65rem; letter-spacing: -.02em; }
+.page .trello-header p { color: rgba(255,255,255,.68); font-size: .82rem; }
+.page .trello-header .secondary-button { border-color: rgba(255,255,255,.2); color: #fff; background: rgba(255,255,255,.14); }
+.page .trello-header .secondary-button:hover { background: rgba(255,255,255,.22); }
+.page .trello-board { grid-auto-columns: 320px; gap: 14px; }
+.page .trello-list { gap: 11px; padding: 14px; border: 1px solid #dde2e8; border-radius: 10px; background: #e9edf2; box-shadow: none; }
+.page .trello-list-header h2 { color: var(--dot-primary); font-size: .9rem; }
+.page .trello-list-subtitle { font-size: .72rem; }
+.page .trello-card { gap: 10px; padding: 13px 14px; border-radius: 8px; box-shadow: 0 2px 8px rgba(44,62,80,.08); }
+.page .trello-card h3 { font-size: .88rem; }
+.page .trello-card-code { padding: 5px 9px; border-radius: 6px; color: #1a73e8; background: #e8f0fe; font-size: .7rem; }
+.page .trello-card-footer { font-size: .75rem; }
+.page .trello-add-card { border-radius: 7px; font-size: .76rem; }
+.page .trello-list-composer { border-radius: 8px; }
+.page .trello-list-composer input { border-radius: 7px; }
+.page .wbs-detail-modal { border-radius: 12px; }
+.page .wbs-detail-sidecard,
+.page .board-sidecard,
+.page .wbs-comment-item,
+.page .wbs-subtask-item,
+.page .wbs-file-item { border-radius: 8px; }
+
 /* Los formularios de contenido aprovechan el ancho de su tarjeta. */
 .detail-card > form {
     display: grid;

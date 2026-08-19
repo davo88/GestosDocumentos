@@ -2556,7 +2556,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="{% static 'gestor_documentos/css/gestos-interface.css' %}?v=5">
+    <link rel="stylesheet" href="{% static 'gestor_documentos/css/gestos-interface.css' %}?v=6">
 </head>
 <body>
     <div class="layout">
@@ -2605,6 +2605,8 @@
                     <span>
                         {% if request.resolver_match.url_name == 'inicio' %}Inicio
                         {% elif request.resolver_match.url_name == 'buscador_documentacion' %}Buscador
+                        {% elif request.resolver_match.url_name == 'wbs_project_list' %}Proyectos WBS
+                        {% elif request.resolver_match.url_name == 'wbs_board' %}Tablero WBS
                         {% elif request.resolver_match.url_name == 'tickets' or request.resolver_match.url_name == 'ticket_detalle' %}Tickets
                         {% elif request.resolver_match.url_name == 'configuraciones' %}Configuraciones
                         {% elif request.resolver_match.url_name == 'crear_usuarios' %}Usuarios

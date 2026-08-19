@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">Proyectos WBS</h1>
-        <p class="page-subtitle">Selecciona un proyecto para entrar a su tablero o crea uno nuevo solo para la operacion WBS.</p>
+        <p class="page-subtitle">Selecciona un proyecto o crea uno nuevo.</p>
     </div>
     {% if can_manage_wbs_board %}
         <button class="primary-button" type="button" data-open-create-project>Crear proyecto</button>
@@ -30,7 +30,7 @@
                     <tr>
                         <td><strong>{{ proyecto.nombre }}</strong></td>
                         <td><span class="role-badge wbs">{{ proyecto.prefijo }}</span></td>
-                        <td>{{ proyecto.descripcion|default:"Sin descripcion registrada para este proyecto WBS." }}</td>
+                        <td>{{ proyecto.descripcion|default:"Sin descripci&oacute;n" }}</td>
                         <td>
                             {% if proyecto.etapas.all %}
                                 <div class="workspace-shell">
@@ -66,7 +66,7 @@
                 {% empty %}
                     <tr>
                         <td colspan="5" class="empty-state">
-                            Aun no hay proyectos WBS. {% if can_manage_wbs_board %}Crea el primero para empezar a trabajar el tablero por proyecto.{% else %}Espera a que un usuario WBS cree uno.{% endif %}
+                            Sin proyectos WBS.{% if can_manage_wbs_board %} Crea el primero para comenzar.{% endif %}
                         </td>
                     </tr>
                 {% endfor %}
@@ -79,7 +79,7 @@
     <div class="modal-backdrop {% if form.errors and not edit_project %}open{% endif %}" id="crear-proyecto-wbs-modal">
         <div class="modal">
             <h2>Nuevo proyecto WBS</h2>
-            <p>Captura el nombre y una descripcion breve del proyecto para abrir su tablero independiente.</p>
+            <p>Define los datos del proyecto.</p>
 
             <form method="post">
                 {% csrf_token %}
@@ -120,7 +120,7 @@
     <div class="modal-backdrop {% if edit_project and edit_project_form %}open{% endif %}" id="editar-proyecto-wbs-modal">
         <div class="modal">
             <h2>Editar proyecto WBS</h2>
-            <p>Actualiza nombre, prefijo y descripcion del proyecto antes de volver al tablero.</p>
+            <p>Actualiza los datos del proyecto.</p>
 
             {% if edit_project and edit_project_form %}
                 <form method="post">

@@ -11,8 +11,6 @@
         </div>
         <div class="board-actions">
             <a class="secondary-button" href="{% url 'wbs_project_list' %}">Volver a proyectos</a>
-            <span class="role-badge wbs">WBS</span>
-            <span class="role-badge wbs-desarrollo">WBS_Desarrollo</span>
         </div>
     </div>
 
@@ -76,7 +74,7 @@
                                     </div>
                                 </article>
                             {% empty %}
-                                <div class="board-empty">Todavia no hay tarjetas en esta lista.</div>
+                                <div class="board-empty">Sin tarjetas.</div>
                             {% endfor %}
                         </div>
 
@@ -107,7 +105,7 @@
     <div class="modal-backdrop {% if edit_stage and edit_stage_form %}open{% endif %}" id="editar-lista-wbs-modal">
         <div class="modal">
             <h2>Editar lista</h2>
-            <p>Actualiza el nombre de la lista del tablero.</p>
+            <p>Cambia el nombre de la lista.</p>
 
             {% if edit_stage and edit_stage_form %}
                 <form method="post">
@@ -135,7 +133,7 @@
     <div class="modal-backdrop {% if task_modal_abierto %}open{% endif %}" id="crear-tarea-wbs-modal">
         <div class="modal">
             <h2>Nueva tarjeta</h2>
-            <p>Captura la informacion de la nueva tarjeta y asignala a una lista del proyecto.</p>
+            <p>Define la tarjeta y su lista.</p>
 
             <form method="post">
                 {% csrf_token %}
