@@ -99,11 +99,17 @@ def ensure_directory(path, marker_text):
     if not normalized:
         raise GitHubSyncError("La ruta a crear en GitHub es invalida.")
 
+    marker_path = f"{normalized}/.gitkeep"
     payload = {
         "message": f"Crear carpeta {normalized}",
         "content": base64.b64encode(marker_text.encode("utf-8")).decode("utf-8"),
     }
-    _request_json("PUT", f"{normalized}/.gitkeep", payload)
+    current_file = _get_json(marker_path)
+    if current_file and "sha" in current_file:
+        payload["sha"] = current_file["sha"]
+        payload["message"] = f"Actualizar carpeta {normalized}"
+
+    _request_json("PUT", marker_path, payload)
 
 
 def upsert_text_file(path, text_content, commit_message):
